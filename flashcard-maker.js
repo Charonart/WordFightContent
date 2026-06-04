@@ -299,6 +299,44 @@ class Flashcard {
     if (this.cefrLevel) {
       this.cefrLevel.textContent = data.cefrLevel || '';
     }
+
+    // Auto-scale content if it overflows
+    this.autoFitContent();
+  }
+
+  /**
+   * Auto scale the inner content to prevent overflow.
+   * Maintains the 4:5 aspect ratio by uniformly scaling down the content
+   * inside the fixed-size container.
+   */
+  autoFitContent() {
+    const frame = this.container.querySelector('#capture-frame');
+    const content = this.container.querySelector('#flashcard-content-wrapper');
+    if (!frame || !content) return;
+    
+    const applyScale = () => {
+      // Reset any previous transforms before measuring
+      content.style.transform = 'none';
+      content.style.transformOrigin = 'top center';
+      
+      const frameHeight = frame.clientHeight;
+      // Force layout to ensure scrollHeight is accurate
+      const contentHeight = content.scrollHeight;
+      
+      if (contentHeight > frameHeight) {
+        // Calculate the scale needed to fit the content exactly
+        // Multiply by 0.99 for a tiny safety margin to prevent any clipping edge-cases
+        const scaleFactor = (frameHeight / contentHeight) * 0.99;
+        content.style.transform = `scale(${scaleFactor})`;
+      }
+    };
+
+    // Run once synchronously in case it works right away
+    applyScale();
+    
+    // Run again after a short delay to account for webfont rendering or image loading
+    setTimeout(applyScale, 50);
+    setTimeout(applyScale, 200);
   }
 }
 
