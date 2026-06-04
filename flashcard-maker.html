@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WordFight Flashcard Live Editor</title>
+  
+  <!-- Tailwind CSS v3 CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- html2canvas cho Screenshot -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            // Tailwind colors matching standard system colors
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Nunito Local Fonts extracted from original WordFight content -->
+  <link rel="stylesheet" href="./nunito-font.css">
+  
+  <!-- Outfit Google Font (Used for editor UI headings only) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --font-nunito: "Nunito", "Nunito Fallback", sans-serif;
+      --background: 0 0% 98%;
+      --foreground: 112 67% 12%;
+      --card: 0 0% 100%;
+      --card-foreground: 112 67% 12%;
+      --primary: 113 74% 60%;
+      --primary-foreground: 112 67% 12%;
+      --secondary: 113 78% 95%;
+      --secondary-foreground: 112 67% 12%;
+      --muted: 113 78% 95%;
+      --muted-foreground: 112 47% 22%;
+      --accent: 113 74% 60%;
+      --accent-foreground: 112 67% 12%;
+      --border: 214.3 31.8% 90%;
+      --radius: 1rem;
+    }
+
+    .dark {
+      --font-nunito: "Nunito", "Nunito Fallback", sans-serif;
+      --background: 112 67% 4%;
+      --foreground: 112 67% 95%;
+      --card: 112 67% 6%;
+      --card-foreground: 112 67% 95%;
+      --primary: 113 74% 45%;
+      --primary-foreground: 112 67% 4%;
+      --secondary: 112 47% 8%;
+      --secondary-foreground: 112 67% 95%;
+      --muted: 112 47% 8%;
+      --muted-foreground: 112 47% 75%;
+      --accent: 113 74% 45%;
+      --accent-foreground: 112 67% 4%;
+      --border: 112 47% 15%;
+    }
+
+    * {
+      border-color: hsl(var(--border));
+    }
+
+    body, button, input, textarea, select {
+      font-family: var(--font-nunito), ui-sans-serif, system-ui, sans-serif !important;
+    }
+
+    h1, h3, .font-heading {
+      font-family: 'Outfit', sans-serif !important;
+    }
+
+    body {
+      background-color: hsl(var(--background));
+      color: hsl(var(--foreground));
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    /* Set background colors using system HSL variables */
+    .bg-background { background-color: hsl(var(--background)); }
+    .bg-card { background-color: hsl(var(--card)); }
+    .bg-secondary { background-color: hsl(var(--secondary)); }
+    .bg-muted { background-color: hsl(var(--muted)); }
+    .bg-primary { background-color: hsl(var(--primary)); }
+    .text-primary { color: hsl(var(--primary)); }
+    .text-muted-foreground { color: hsl(var(--muted-foreground)); }
+    .border-border { border-color: hsl(var(--border)); }
+
+    /* Custom WordFight specific classes */
+    .fancy-underline {
+      display: inline-block;
+      position: relative;
+      white-space: nowrap;
+      color: hsl(var(--primary));
+    }
+    
+    .fancy-underline:after {
+      content: "";
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background-color: hsl(var(--primary) / 0.5);
+      z-index: 1;
+    }
+
+    .btn-wf-silver {
+      background: linear-gradient(180deg, #ffffff 0, #f9fafb 50%, #f3f4f6);
+      transition: all 0.2s;
+    }
+    
+    .dark .btn-wf-silver {
+      background: linear-gradient(180deg, #1f2937 0, #111827 50%, #0f172a);
+      border-color: #374151 !important;
+      color: #e5e7eb !important;
+      shadow: none;
+    }
+
+    /* Scrollbars */
+    .wordfight-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .wordfight-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .wordfight-scrollbar::-webkit-scrollbar-thumb {
+      background-color: hsl(var(--border));
+      border-radius: 9999px;
+    }
+
+    /* Aurora Glow background helper */
+    .aurora-bg::after, .aurora-bg::before {
+      content: "";
+      position: absolute;
+      border-radius: 999px;
+      filter: blur(80px);
+      z-index: -1;
+      will-change: transform;
+      opacity: 0.5;
+    }
+    .aurora-bg::before {
+      left: 10%;
+      top: 10%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, hsl(var(--primary) / 0.2) 0%, transparent 70%);
+    }
+    .aurora-bg::after {
+      right: 10%;
+      bottom: 10%;
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle, hsl(var(--accent) / 0.15) 0%, transparent 70%);
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col justify-between overflow-x-hidden w-full relative aurora-bg min-h-screen">
+
+  <!-- Header -->
+  <header class="w-full border-b border-border bg-card/65 backdrop-blur-md sticky top-0 z-30 px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="bg-primary/20 text-primary p-2.5 rounded-xl border border-primary/30 flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-swords"><polyline points="20 17 18 19 13 14 14 13 19 18 20 17"/><path d="m18 14 5-5-1-1-5 5v2g-2 2h2"/><polyline points="4 17 6 19 11 14 10 13 5 18 4 17"/><path d="m6 14-5-5 1-1 5 5v2g2 2h-2"/><path d="M3 21h18"/></svg>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold tracking-tight font-heading flex items-center gap-2">
+          WordFight <span class="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary-foreground border border-primary/30 font-sans">Live Editor</span>
+        </h1>
+        <p class="text-xs text-muted-foreground">Chỉnh sửa flashcard thời gian thực bằng JSON</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-4">
+      <!-- Dark Mode Switcher -->
+      <button id="theme-toggle" class="p-2.5 rounded-full hover:bg-secondary border border-border cursor-pointer transition-colors" title="Đổi giao diện">
+        <!-- Sun icon (Light) -->
+        <svg id="theme-toggle-light-icon" class="hidden w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 100 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+        <!-- Moon icon (Dark) -->
+        <svg id="theme-toggle-dark-icon" class="w-5 h-5 text-slate-700 dark:text-slate-300" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content Dashboard -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+    
+    <!-- LEFT PANEL: Preset & JSON Editor (lg:col-span-5) -->
+    <section class="lg:col-span-5 flex flex-col gap-5 h-full">
+      
+      <!-- Preset List -->
+      <div class="bg-card/50 backdrop-blur-md border border-border p-5 rounded-2xl shadow-sm flex flex-col gap-3">
+        <div class="flex justify-between items-center">
+          <h2 class="text-sm font-bold tracking-wide uppercase text-muted-foreground font-heading">Danh sách Từ vựng mẫu</h2>
+          <div class="flex gap-1">
+            <button id="btn-preset-prev" class="p-1 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors" title="Từ trước đó">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+            <button id="btn-preset-next" class="p-1 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors" title="Từ tiếp theo">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </button>
+          </div>
+        </div>
+        
+        <div class="flex flex-wrap gap-2" id="preset-container">
+          <!-- Preset buttons injected by JS -->
+        </div>
+
+        <div class="flex flex-wrap gap-2 mt-1 pt-3 border-t border-border">
+          <button id="btn-preset-add" class="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider bg-green-500/10 text-green-600 hover:bg-green-500/20 rounded-lg transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            Lưu thành từ mới
+          </button>
+          <button id="btn-preset-update" class="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 rounded-lg transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+            Cập nhật
+          </button>
+          <button id="btn-preset-delete" class="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider bg-red-500/10 text-red-600 hover:bg-red-500/20 rounded-lg transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            Xóa
+          </button>
+        </div>
+      </div>
+      
+      <!-- Field Editor Panel -->
+      <div class="bg-card/50 backdrop-blur-md border border-border p-5 rounded-2xl shadow-sm flex-1 flex flex-col gap-4 min-h-[500px]">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-bold tracking-wide uppercase text-muted-foreground font-heading font-heading">Trình chỉnh sửa nội dung</h2>
+          <span id="form-status" class="text-xs font-semibold px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20">Chế độ: Biên Tập Field</span>
+        </div>
+        
+        <!-- Form Inputs container (Scrollable) -->
+        <form id="flashcard-form" class="flex-1 overflow-y-auto pr-1 flex flex-col gap-4 wordfight-scrollbar max-h-[500px] lg:max-h-[520px]">
+          <!-- Từ vựng & Phiên âm -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider" for="input-word">Từ vựng <span class="text-red-500 font-bold">*</span></label>
+              <input id="input-word" type="text" class="px-3.5 py-2 rounded-xl bg-secondary/35 border border-border text-foreground focus:outline-none focus:border-primary/50 text-sm transition-all focus-within:shadow-[0_5px_0_0_hsl(var(--primary)/0.35)]" placeholder="Ví dụ: alive" required>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider" for="input-ipa">Phiên âm (IPA)</label>
+              <input id="input-ipa" type="text" class="px-3.5 py-2 rounded-xl bg-secondary/35 border border-border text-foreground focus:outline-none focus:border-primary/50 text-sm transition-all focus-within:shadow-[0_5px_0_0_hsl(var(--primary)/0.35)]" placeholder="Ví dụ: /əˈlaɪv/">
+            </div>
+          </div>
+
+          <!-- Nghĩa & Link ảnh -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider" for="input-meaning">Nghĩa tiếng Việt</label>
+              <input id="input-meaning" type="text" class="px-3.5 py-2 rounded-xl bg-secondary/35 border border-border text-foreground focus:outline-none focus:border-primary/50 text-sm transition-all focus-within:shadow-[0_5px_0_0_hsl(var(--primary)/0.35)]" placeholder="Ví dụ: còn sống">
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider" for="input-image">Hình ảnh (URL)</label>
+              <input id="input-image" type="text" class="px-3.5 py-2 rounded-xl bg-secondary/35 border border-border text-foreground focus:outline-none focus:border-primary/50 text-sm transition-all focus-within:shadow-[0_5px_0_0_hsl(var(--primary)/0.35)]" placeholder="https://images.unsplash.com/...">
+            </div>
+          </div>
+
+          <!-- Ví dụ English & Vietnamese -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider" for="input-example-en">Ví dụ tiếng Anh</label>
+            <textarea id="input-example-en" rows="2" class="px-3.5 py-2 rounded-xl bg-secondary/35 border border-border text-foreground focus:outline-none focus:border-primary/50 text-sm transition-all resize-none focus-within:shadow-[0_5px_0_0_hsl(var(--primary)/0.35)]" placeholder="It is a miracle that he is still alive..."></textarea>
+            <span class="text-[10px] text-muted-foreground ml-1">Mẹo: Bọc từ trong dấu * hoặc ** để in đậm và gạch chân (VD: *alive*)</span>
+          </div>
+          
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider" for="input-example-vi">Dịch câu ví dụ</label>
+            <textarea id="input-example-vi" rows="2" class="px-3.5 py-2 rounded-xl bg-secondary/35 border border-border text-foreground focus:outline-none focus:border-primary/50 text-sm transition-all resize-none focus-within:shadow-[0_5px_0_0_hsl(var(--primary)/0.35)]" placeholder="Thật kỳ diệu khi anh ấy vẫn còn sống..."></textarea>
+            <span class="text-[10px] text-muted-foreground ml-1">Mẹo: Bọc từ trong dấu * hoặc ** để in đậm và gạch chân (VD: *còn sống*)</span>
+          </div>
+
+          <!-- Audio Word & Example -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider" for="input-audio-word">Audio Từ vựng (URL)</label>
+              <input id="input-audio-word" type="text" class="px-3.5 py-2 rounded-xl bg-secondary/35 border border-border text-foreground focus:outline-none focus:border-primary/50 text-sm transition-all focus-within:shadow-[0_5px_0_0_hsl(var(--primary)/0.35)]" placeholder="Link mp3 (tùy chọn)">
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider" for="input-audio-example">Audio Ví dụ (URL)</label>
+              <input id="input-audio-example" type="text" class="px-3.5 py-2 rounded-xl bg-secondary/35 border border-border text-foreground focus:outline-none focus:border-primary/50 text-sm transition-all focus-within:shadow-[0_5px_0_0_hsl(var(--primary)/0.35)]" placeholder="Link mp3 (tùy chọn)">
+            </div>
+          </div>
+
+          <!-- Mẫu câu & CEFR -->
+          <div class="grid grid-cols-2 gap-4 border-t border-border pt-4 mt-2">
+            <div class="col-span-2 flex flex-col gap-1.5">
+              <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider" for="input-pattern-en">Mẫu câu tiếng Anh</label>
+              <textarea id="input-pattern-en" rows="2" class="px-3.5 py-2 rounded-xl bg-secondary/35 border border-border text-foreground focus:outline-none focus:border-primary/50 text-sm transition-all resize-none focus-within:shadow-[0_5px_0_0_hsl(var(--primary)/0.35)]" placeholder="Ví dụ: The young entrepreneur decided to *embark* on..."></textarea>
+            </div>
+            <div class="col-span-2 flex flex-col gap-1.5">
+              <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider" for="input-pattern-vi">Dịch Mẫu câu</label>
+              <textarea id="input-pattern-vi" rows="2" class="px-3.5 py-2 rounded-xl bg-secondary/35 border border-border text-foreground focus:outline-none focus:border-primary/50 text-sm transition-all resize-none focus-within:shadow-[0_5px_0_0_hsl(var(--primary)/0.35)]" placeholder="Ví dụ: Nhà doanh nghiệp trẻ quyết định *bắt đầu*..."></textarea>
+            </div>
+            <div class="col-span-2 flex flex-col gap-1.5">
+              <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider" for="input-cefr-level">Trình độ CEFR</label>
+              <input id="input-cefr-level" type="text" class="px-3.5 py-2 rounded-xl bg-secondary/35 border border-border text-foreground focus:outline-none focus:border-primary/50 text-sm transition-all focus-within:shadow-[0_5px_0_0_hsl(var(--primary)/0.35)]" placeholder="Ví dụ: B2">
+            </div>
+          </div>
+        </form>
+
+        <!-- Action buttons -->
+        <div class="flex flex-col gap-2.5 border-t border-border pt-4">
+          <div class="flex items-center gap-3">
+            <button id="btn-clear" type="button" class="px-5 py-2.5 text-sm font-semibold rounded-full bg-secondary text-foreground border border-border hover:bg-red-500/10 hover:text-red-500 hover:scale-100 active:scale-[0.98] transition-all cursor-pointer">
+              Xóa
+            </button>
+            <button id="btn-open-import" type="button" class="flex-1 px-4 py-2.5 text-sm font-bold bg-secondary hover:bg-primary/20 border border-border text-foreground hover:scale-100 active:scale-[0.98] transition-all rounded-full cursor-pointer">
+              Nhập JSON
+            </button>
+            <button id="btn-copy-json" type="button" class="flex-1 px-4 py-2.5 text-sm font-bold bg-secondary hover:bg-primary/20 border border-border text-foreground hover:scale-100 active:scale-[0.98] transition-all rounded-full cursor-pointer">
+              Sao Chép JSON
+            </button>
+          </div>
+          <div class="grid grid-cols-2 gap-3 mt-3">
+            <button id="btn-copy-html" type="button" class="col-span-2 w-full px-4 py-2.5 text-sm font-bold bg-primary text-primary-foreground hover:scale-100 active:scale-[0.98] transition-all rounded-xl shadow-md hover:shadow-lg cursor-pointer">
+              Copy HTML Thẻ
+            </button>
+            <button id="btn-screenshot" type="button" class="w-full px-4 py-2 text-xs font-bold bg-emerald-500 text-white hover:bg-emerald-600 active:scale-[0.98] transition-all rounded-xl shadow-md cursor-pointer flex items-center justify-center gap-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+              Chụp ảnh thẻ
+            </button>
+            <button id="btn-screenshot-all" type="button" class="w-full px-4 py-2 text-xs font-bold bg-indigo-500 text-white hover:bg-indigo-600 active:scale-[0.98] transition-all rounded-xl shadow-md cursor-pointer flex items-center justify-center gap-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+              Chụp tất cả
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT PANEL: Flashcard Preview (lg:col-span-7) -->
+    <section class="lg:col-span-7 flex flex-col items-center justify-center p-4 md:p-6 bg-card/30 border border-border rounded-3xl min-h-[500px] relative shadow-sm">
+      <div class="absolute top-4 left-6">
+        <h2 class="text-xs font-bold tracking-widest uppercase text-muted-foreground font-heading">Xem trước (Click để lật thẻ)</h2>
+      </div>
+      
+      <!-- Flashcard HTML Structure (Copied exactly from user's request) -->
+      <div id="wordfight-card-root" class="flex-1 w-full flex flex-col items-center justify-center p-4 min-h-0 overflow-hidden">
+        <div class="w-full max-w-sm md:max-w-md [perspective:1000px] relative flex-1 flex items-center justify-center">
+          <div id="flashcard-container" class="relative w-full rounded-2xl shadow-2xl cursor-pointer transition-transform duration-700 [transform-style:preserve-3d] h-full min-h-[400px] [transform:rotateY(180deg)]">
+            
+            <!-- Mặt trước (Front) -->
+            <div class="absolute inset-0 flex flex-col items-center justify-center [backface-visibility:hidden] p-4 md:p-6 text-center rounded-2xl overflow-hidden bg-background">
+              <h2 id="front-word" class="text-4xl md:text-5xl font-bold text-primary text-center">alive</h2>
+            </div>
+            
+            <!-- Mặt sau (Back) -->
+            <div id="capture-frame" class="absolute inset-0 flex flex-col [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-2xl overflow-hidden bg-cover bg-center" style="background-image: url('./background.jpeg');">
+              <!-- Blur overlay -->
+              <div class="absolute inset-0 bg-black/10 backdrop-blur-[10px] z-0"></div>
+              
+              <div dir="ltr" class="relative z-10 overflow-hidden h-full w-full flex flex-col items-center justify-center p-3" style="position: relative; --radix-scroll-area-corner-width: 0px; --radix-scroll-area-corner-height: 0px;">
+                <style>
+                  [data-radix-scroll-area-viewport]{scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}
+                  [data-radix-scroll-area-viewport]::-webkit-scrollbar{display:none}
+                </style>
+                <div data-radix-scroll-area-viewport="" class="h-full w-full rounded-[inherit] !block !max-w-full !min-w-0" style="overflow: hidden scroll; display: block; max-width: 100%; min-width: 0px;">
+                  <div style="min-width: 100%; display: table; height: 100%;">
+                    <div class="!block !w-full flex flex-col items-center pb-8" style="display: block; width: 100%;">
+                      
+                      <!-- White Box -->
+                      <div class="bg-card rounded-2xl shadow-xl w-11/12 mx-auto mt-6 flex flex-col items-center text-center gap-3 overflow-hidden relative z-10">
+                        <div class="p-4 md:p-6 flex flex-col items-center text-center gap-3 w-full">
+                          <!-- Ảnh đại diện -->
+                          <div class="w-32 h-32 md:w-36 md:h-36 bg-secondary rounded-xl shadow-inner overflow-hidden relative flex-shrink-0">
+                            <img id="back-word-img" alt="alive" loading="lazy" decoding="async" data-nimg="fill" class="object-cover" src="https://images.unsplash.com/photo-1585745422697-1b42b98aac14?crop=entropy&amp;cs=tinysrgb&amp;fit=crop&amp;fm=webp&amp;ixid=M3w4MjQ0MDh8MHwxfHNlYXJjaHwxfHxsaXZpbmclMjBwZXJzb258ZW58MHwwfHx8MTc3NzI3OTU2OXww&amp;ixlib=rb-4.1.0&amp;q=80&amp;w=144&amp;h=144" style="position: absolute; height: 100%; width: 100%; inset: 0px; color: transparent;">
+                          </div>
+                          
+                          <!-- Từ và Phát âm -->
+                          <div class="space-y-0.5 w-full flex flex-col items-center">
+                            <div class="relative w-full flex items-center justify-center">
+                              <h2 id="back-word" class="text-3xl font-bold text-primary">alive</h2>
+                              <button id="btn-play-word" class="inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-bold ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 transition-transform duration-100 cursor-pointer select-none hover:bg-accent hover:text-accent-foreground hover:scale-100 active:scale-[0.97] shadow-none border-0 h-9 w-9 text-muted-foreground flex-shrink-0 absolute right-0" type="button">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-volume2 lucide-volume-2 h-5 w-5"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"></path><path d="M16 9a5 5 0 0 1 0 6"></path><path d="M19.364 18.364a9 9 0 0 0 0-12.728"></path></svg>
+                              </button>
+                            </div>
+                            <p id="back-word-ipa" class="font-mono text-muted-foreground">/əˈlaɪv/</p>
+                            <p id="back-word-meaning" class="text-xl font-semibold">còn sống, sống động, hoạt động</p>
+                          </div>
+                          
+                          <!-- Đường gạch ngang ngăn cách -->
+                          <div data-orientation="horizontal" role="none" class="shrink-0 bg-border h-[1px] w-full my-1.5"></div>
+                          
+                          <!-- Ví dụ và phát âm ví dụ -->
+                          <div class="w-full flex justify-center items-center gap-2 text-center mb-2">
+                            <div class="flex-1 text-foreground text-sm">
+                              <p id="back-example-en" class="text-sm text-foreground">
+                                <span><span>It is a miracle that he is still </span><strong class="font-bold fancy-underline text-primary">alive</strong><span> after the accident.</span></span>
+                              </p>
+                              <p id="back-example-vi" class="text-sm italic text-muted-foreground">
+                                -&gt; <span><span>Thật kỳ diệu khi anh ấy vẫn </span><strong class="font-bold fancy-underline text-primary">còn sống</strong><span> sau vụ tai nạn.</span></span>
+                              </p>
+                            </div>
+                            <button id="btn-play-example" class="inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-bold ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 transition-transform duration-100 cursor-pointer select-none hover:bg-accent hover:text-accent-foreground hover:scale-100 active:scale-[0.97] shadow-none border-0 h-8 w-8 text-muted-foreground flex-shrink-0">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-volume2 lucide-volume-2 h-5 w-5"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"></path><path d="M16 9a5 5 0 0 1 0 6"></path><path d="M19.364 18.364a9 9 0 0 0 0-12.728"></path></svg>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Green Box (Mẫu câu & CEFR) -->
+                      <div class="bg-[#6b8e23] text-white p-5 rounded-2xl -mt-4 relative z-0 w-11/12 mx-auto shadow-lg mb-6 pt-8">
+                        <div class="flex justify-between items-start gap-4">
+                          <div class="text-left flex-1">
+                            <h3 class="text-lg font-bold mb-2">Mẫu câu</h3>
+                            <ul class="list-none text-sm space-y-1">
+                              <li class="flex gap-2 items-start"><span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-white flex-shrink-0"></span><span id="back-pattern-en">The young entrepreneur decided to <span class="border-b border-white">embark</span> on an exciting business venture.</span></li>
+                              <li id="back-pattern-vi" class="text-white/90 text-xs mt-1 ml-3.5">→ Nhà doanh nghiệp trẻ quyết định <span class="border-b border-white font-bold">bắt đầu</span> một dự án kinh doanh thú vị.</li>
+                            </ul>
+                          </div>
+                          <div class="text-right flex-shrink-0">
+                            <div class="text-[10px] font-bold uppercase tracking-widest text-white/80">CEFR</div>
+                            <div id="back-cefr" class="text-4xl md:text-5xl font-bold mt-1">B2</div>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Screenshot Panel -->
+  <section class="max-w-7xl w-full mx-auto p-4 md:p-6 mb-8 mt-4">
+    <div class="bg-card/50 backdrop-blur-md border border-border p-5 rounded-2xl shadow-sm flex flex-col gap-4">
+      <h2 class="text-sm font-bold tracking-wide uppercase text-muted-foreground font-heading">Ảnh đã chụp (Screenshots)</h2>
+      <div class="overflow-x-auto wordfight-scrollbar rounded-xl border border-border">
+        <table class="w-full text-sm text-left text-foreground">
+          <thead class="text-xs uppercase bg-secondary/80 border-b border-border">
+            <tr>
+              <th scope="col" class="px-6 py-3 font-bold w-1/4">Từ vựng</th>
+              <th scope="col" class="px-6 py-3 font-bold w-1/6">Mặt thẻ</th>
+              <th scope="col" class="px-6 py-3 font-bold">Ảnh xem trước</th>
+              <th scope="col" class="px-6 py-3 font-bold text-center w-1/5">Hành động</th>
+            </tr>
+          </thead>
+          <tbody id="screenshot-tbody">
+            <!-- Screenshot rows will be injected here -->
+            <tr id="empty-screenshot-row" class="bg-card">
+              <td colspan="4" class="px-6 py-8 text-center text-muted-foreground italic">Chưa có ảnh nào được chụp. Nhấn "Chụp ảnh thẻ" để bắt đầu.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="w-full border-t border-border py-4 px-6 text-center text-xs text-muted-foreground bg-card/30 backdrop-blur-md">
+    &copy; 2026 WordFight Content Live Editor. Thiết kế bởi Antigravity.
+  </footer>
+
+  <!-- Import JSON Modal -->
+  <dialog id="import-json-modal" class="bg-card/95 border border-border rounded-2xl p-6 backdrop-blur-md shadow-2xl backdrop:bg-black/50 w-full max-w-lg m-auto text-foreground">
+    <h3 class="text-lg font-bold mb-4 font-heading">Nhập JSON Hàng loạt</h3>
+    <p class="text-sm text-muted-foreground mb-4">Dán danh sách từ vựng (Array) hoặc Object JSON vào đây.</p>
+    
+    <details class="mb-4 text-xs bg-secondary/30 border border-border rounded-lg group">
+      <summary class="px-3 py-2 font-semibold cursor-pointer select-none text-primary flex items-center justify-between">
+        Xem hướng dẫn định dạng JSON
+        <svg class="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </summary>
+      <div class="px-3 pb-3 text-muted-foreground border-t border-border mt-1 pt-2 space-y-2">
+        <p>Bắt buộc phải có trường <strong>"word"</strong>. Bạn không cần nhập đủ tất cả các trường (có thể bỏ trống những trường không cần thiết).</p>
+        <div>
+          <span class="font-bold text-foreground">Ví dụ định dạng Mảng (Array):</span>
+          <pre class="bg-secondary/80 border border-border p-2 rounded-md mt-1 font-mono text-[10px] text-foreground overflow-x-auto wordfight-scrollbar">
+[
+  {
+    "word": "apple",
+    "ipa": "/ˈæp.əl/",
+    "meaning": "quả táo",
+    "image": "https://link-to-image...",
+    "exampleEn": "I eat an *apple* every day.",
+    "exampleVi": "Tôi ăn một *quả táo* mỗi ngày."
+  }
+]</pre>
+        </div>
+        <p>Danh sách khóa (key): <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">word</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">ipa</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">meaning</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">image</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">exampleEn</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">exampleVi</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">audioWord</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">audioExample</code>.</p>
+      </div>
+    </details>
+    <textarea id="import-json-textarea" class="w-full h-48 bg-secondary/50 border border-border rounded-xl p-3 text-sm focus:outline-none focus:border-primary/50 font-mono resize-none wordfight-scrollbar" placeholder='[\n  {\n    "word": "apple",\n    "meaning": "quả táo"\n  }\n]'></textarea>
+    <div class="flex justify-end gap-3 mt-6">
+      <button id="btn-import-cancel" class="px-4 py-2 rounded-xl text-sm font-semibold bg-secondary hover:bg-secondary/80 transition-colors cursor-pointer">Hủy</button>
+      <button id="btn-import-confirm" class="px-4 py-2 rounded-xl text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-md cursor-pointer">Nhập Dữ liệu</button>
+    </div>
+  </dialog>
+
+  <!-- Include Flashcard Script -->
+  <script src="./flashcard-maker.js"></script>
+  
+  <script>
+    // Presets Vocabulary Data List
+    let PRESETS = {
+      alive: {
+        word: "alive",
+        ipa: "/əˈlaɪv/",
+        meaning: "còn sống, sống động, hoạt động",
+        image: "https://images.unsplash.com/photo-1585745422697-1b42b98aac14?crop=entropy&cs=tinysrgb&fit=crop&fm=webp&ixid=M3w4MjQ0MDh8MHwxfHNlYXJjaHwxfHxsaXZpbmclMjBwZXJzb258ZW58MHwwfHx8MTc3NzI3OTU2OXww&ixlib=rb-4.1.0&q=80&w=144&h=144",
+        exampleEn: "It is a miracle that he is still alive after the accident.",
+        exampleVi: "Thật kỳ diệu khi anh ấy vẫn còn sống sau vụ tai nạn.",
+        audioWord: "https://dict.youdao.com/dictvoice?audio=alive&type=2",
+        audioExample: "https://dict.youdao.com/dictvoice?audio=It+is+a+miracle+that+he+is+still+alive+after+the+accident.&type=2",
+        patternEn: "The doctors were surprised to find him still *alive* after the crash.",
+        patternVi: "Các bác sĩ rất ngạc nhiên khi thấy anh ấy vẫn *còn sống* sau vụ va chạm.",
+        cefrLevel: "A2"
+      },
+      miracle: {
+        word: "miracle",
+        ipa: "/ˈmɪr.ə.kəl/",
+        meaning: "phép màu, điều kỳ diệu, kỳ tích",
+        image: "https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?crop=entropy&cs=tinysrgb&fit=crop&fm=webp&q=80&w=144&h=144",
+        exampleEn: "It is a miracle that he survived the plane crash.",
+        exampleVi: "Thật là một phép màu khi anh ấy sống sót sau vụ tai nạn máy bay.",
+        audioWord: "https://dict.youdao.com/dictvoice?audio=miracle&type=2",
+        audioExample: "https://dict.youdao.com/dictvoice?audio=It+is+a+miracle+that+he+survived+the+plane+crash.&type=2",
+        patternEn: "It's an absolute *miracle* that you are here.",
+        patternVi: "Thật là một *phép màu* tuyệt đối khi bạn ở đây.",
+        cefrLevel: "B2"
+      },
+      antigravity: {
+        word: "antigravity",
+        ipa: "/ˌæn.tiˈɡræv.ə.ti/",
+        meaning: "kháng trọng lực, chống lực hút trái đất",
+        image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?crop=entropy&cs=tinysrgb&fit=crop&fm=webp&q=80&w=144&h=144",
+        exampleEn: "The theoretical spaceship uses antigravity technology.",
+        exampleVi: "Tàu vũ trụ trong lý thuyết sử dụng công nghệ kháng trọng lực.",
+        audioWord: "https://dict.youdao.com/dictvoice?audio=antigravity&type=2",
+        audioExample: "https://dict.youdao.com/dictvoice?audio=The+theoretical+spaceship+uses+antigravity+technology.&type=2",
+        patternEn: "Scientists are researching *antigravity* propulsion systems.",
+        patternVi: "Các nhà khoa học đang nghiên cứu hệ thống đẩy *kháng trọng lực*.",
+        cefrLevel: "C1"
+      },
+      sparkle: {
+        word: "sparkle",
+        ipa: "/ˈspɑː.kəl/",
+        meaning: "lấp lánh, lóng lánh",
+        image: "https://images.unsplash.com/photo-1490730141103-6cac27aaab94?crop=entropy&cs=tinysrgb&fit=crop&fm=webp&q=80&w=144&h=144",
+        exampleEn: "Her eyes sparkle with excitement whenever she talks about music.",
+        exampleVi: "Đôi mắt cô ấy lấp lánh niềm vui mỗi khi cô ấy nói về âm nhạc.",
+        audioWord: "https://dict.youdao.com/dictvoice?audio=sparkle&type=2",
+        audioExample: "https://dict.youdao.com/dictvoice?audio=Her+eyes+sparkle+with+excitement+whenever+she+talks+about+music.&type=2",
+        patternEn: "The diamonds *sparkle* beautifully under the light.",
+        patternVi: "Những viên kim cương *lấp lánh* tuyệt đẹp dưới ánh sáng.",
+        cefrLevel: "B1"
+      }
+    };
+
+    let currentPresetKey = null;
+    let flashcard = null;
+    let form, formStatus, btnClear, btnCopyJson, btnCopyHtml, presetContainer;
+    let inputWord, inputIpa, inputMeaning, inputImage, inputExampleEn, inputExampleVi, inputAudioWord, inputAudioExample, inputPatternEn, inputPatternVi, inputCefrLevel;
+
+    // Load active theme
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+    const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+
+    // Initialize Card
+    document.addEventListener('DOMContentLoaded', () => {
+      // Find DOM elements
+      form = document.getElementById('flashcard-form');
+      formStatus = document.getElementById('form-status');
+      btnClear = document.getElementById('btn-clear');
+      btnCopyJson = document.getElementById('btn-copy-json');
+      btnCopyHtml = document.getElementById('btn-copy-html');
+      presetContainer = document.getElementById('preset-container');
+
+      inputWord = document.getElementById('input-word');
+      inputIpa = document.getElementById('input-ipa');
+      inputMeaning = document.getElementById('input-meaning');
+      inputImage = document.getElementById('input-image');
+      inputExampleEn = document.getElementById('input-example-en');
+      inputExampleVi = document.getElementById('input-example-vi');
+      inputAudioWord = document.getElementById('input-audio-word');
+      inputAudioExample = document.getElementById('input-audio-example');
+      inputPatternEn = document.getElementById('input-pattern-en');
+      inputPatternVi = document.getElementById('input-pattern-vi');
+      inputCefrLevel = document.getElementById('input-cefr-level');
+
+      // Create Flashcard Controller Instance targeting the root wrapper
+      flashcard = new Flashcard('#wordfight-card-root');
+
+      // Setup Presets
+      loadPresetsFromStorage();
+      renderPresetButtons();
+      
+      // Load first preset or 'alive'
+      const presetKeys = Object.keys(PRESETS);
+      if (presetKeys.length > 0) {
+        loadPreset(presetKeys.includes('alive') ? 'alive' : presetKeys[0]);
+      }
+
+      // Event listeners for Preset Management
+      document.getElementById('btn-preset-add').addEventListener('click', saveNewPreset);
+      document.getElementById('btn-preset-update').addEventListener('click', updateCurrentPreset);
+      document.getElementById('btn-preset-delete').addEventListener('click', deleteCurrentPreset);
+      document.getElementById('btn-preset-prev').addEventListener('click', prevPreset);
+      document.getElementById('btn-preset-next').addEventListener('click', nextPreset);
+
+      // Theme toggle functionality
+      if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+        themeToggleLightIcon.classList.remove('hidden');
+        themeToggleDarkIcon.classList.add('hidden');
+      } else {
+        document.documentElement.classList.remove('dark');
+        themeToggleLightIcon.classList.add('hidden');
+        themeToggleDarkIcon.classList.remove('hidden');
+      }
+
+      themeToggleBtn.addEventListener('click', function() {
+        themeToggleLightIcon.classList.toggle('hidden');
+        themeToggleDarkIcon.classList.toggle('hidden');
+        
+        if (document.documentElement.classList.contains('dark')) {
+          document.documentElement.classList.remove('dark');
+          localStorage.setItem('color-theme', 'light');
+        } else {
+          document.documentElement.classList.add('dark');
+          localStorage.setItem('color-theme', 'dark');
+        }
+      });
+
+      // Real-time synchronization
+      form.addEventListener('input', updateCardFromForm);
+
+      // Copy JSON button click
+      btnCopyJson.addEventListener('click', copyJsonToClipboard);
+
+      // Copy HTML button click
+      btnCopyHtml.addEventListener('click', copyHtmlToClipboard);
+
+      // Screenshot button click
+      const btnScreenshot = document.getElementById('btn-screenshot');
+      if (btnScreenshot) {
+        btnScreenshot.addEventListener('click', takeScreenshots);
+      }
+      
+      const btnScreenshotAll = document.getElementById('btn-screenshot-all');
+      if (btnScreenshotAll) {
+        btnScreenshotAll.addEventListener('click', takeAllScreenshots);
+      }
+
+      // Clear Form button click
+      btnClear.addEventListener('click', clearForm);
+
+      // Import JSON Modal logic
+      const importModal = document.getElementById('import-json-modal');
+      const btnOpenImport = document.getElementById('btn-open-import');
+      const btnImportCancel = document.getElementById('btn-import-cancel');
+      const btnImportConfirm = document.getElementById('btn-import-confirm');
+      const importTextarea = document.getElementById('import-json-textarea');
+
+      btnOpenImport.addEventListener('click', () => {
+        importTextarea.value = '';
+        importModal.showModal();
+      });
+
+      btnImportCancel.addEventListener('click', () => {
+        importModal.close();
+      });
+
+      btnImportConfirm.addEventListener('click', () => {
+        const val = importTextarea.value.trim();
+        if (!val) {
+          alert("Vui lòng nhập dữ liệu JSON.");
+          return;
+        }
+        try {
+          const parsed = JSON.parse(val);
+          let count = 0;
+          
+          if (Array.isArray(parsed)) {
+            parsed.forEach(item => {
+              if (item && item.word) {
+                const key = item.word.toLowerCase().replace(/\s+/g, '-');
+                PRESETS[key] = { ...PRESETS[key], ...item };
+                count++;
+              }
+            });
+          } else if (typeof parsed === 'object' && parsed !== null) {
+            Object.keys(parsed).forEach(key => {
+              if (parsed[key] && parsed[key].word) {
+                const safeKey = parsed[key].word.toLowerCase().replace(/\s+/g, '-');
+                PRESETS[safeKey] = { ...PRESETS[safeKey], ...parsed[key] };
+                count++;
+              }
+            });
+          }
+          
+          if (count > 0) {
+            savePresetsToStorage();
+            renderPresetButtons();
+            alert(`Đã nhập thành công ${count} từ vựng mới!`);
+            importModal.close();
+          } else {
+            alert("Không tìm thấy từ vựng nào hợp lệ trong JSON. Hãy đảm bảo mỗi mục có trường 'word'.");
+          }
+        } catch(e) {
+          alert("Lỗi phân tích JSON. Vui lòng kiểm tra lại định dạng.");
+          console.error(e);
+        }
+      });
+    });
+
+    // Extract data object from form fields
+    function getFormData() {
+      return {
+        word: inputWord.value.trim(),
+        ipa: inputIpa.value.trim(),
+        meaning: inputMeaning.value.trim(),
+        image: inputImage.value.trim(),
+        exampleEn: inputExampleEn.value.trim(),
+        exampleVi: inputExampleVi.value.trim(),
+        audioWord: inputAudioWord.value.trim(),
+        audioExample: inputAudioExample.value.trim(),
+        patternEn: inputPatternEn.value.trim(),
+        patternVi: inputPatternVi.value.trim(),
+        cefrLevel: inputCefrLevel.value.trim()
+      };
+    }
+
+    // Preset Management Functions
+    function loadPresetsFromStorage() {
+      const saved = localStorage.getItem('wordfight-presets');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          PRESETS = { ...PRESETS, ...parsed };
+        } catch(e) {
+          console.error("Failed to load presets", e);
+        }
+      }
+    }
+
+    function savePresetsToStorage() {
+      localStorage.setItem('wordfight-presets', JSON.stringify(PRESETS));
+    }
+
+    function renderPresetButtons() {
+      presetContainer.innerHTML = '';
+      Object.keys(PRESETS).forEach((key) => {
+        const btn = document.createElement('button');
+        btn.className = 'px-4 py-1.5 text-xs font-bold rounded-full bg-secondary border border-border hover:border-primary/50 text-foreground cursor-pointer transition-colors';
+        if (key === currentPresetKey) {
+          btn.className = 'px-4 py-1.5 text-xs font-bold rounded-full bg-primary/20 border border-primary text-primary-foreground cursor-pointer transition-colors';
+        }
+        btn.textContent = PRESETS[key].word || key;
+        btn.addEventListener('click', () => {
+          loadPreset(key);
+        });
+        presetContainer.appendChild(btn);
+      });
+    }
+
+    function saveNewPreset() {
+      const data = getFormData();
+      if (!data.word) {
+        alert("Vui lòng nhập Từ vựng (Word) trước khi lưu.");
+        return;
+      }
+      const key = data.word.toLowerCase().replace(/\s+/g, '-');
+      PRESETS[key] = data;
+      savePresetsToStorage();
+      currentPresetKey = key;
+      renderPresetButtons();
+    }
+
+    function updateCurrentPreset() {
+      if (!currentPresetKey) {
+        alert("Bạn chưa chọn từ vựng mẫu nào để cập nhật. Hãy dùng nút 'Lưu thành từ mới'.");
+        return;
+      }
+      const data = getFormData();
+      if (!data.word) {
+        alert("Vui lòng nhập Từ vựng (Word).");
+        return;
+      }
+      PRESETS[currentPresetKey] = data;
+      savePresetsToStorage();
+      renderPresetButtons();
+    }
+
+    function deleteCurrentPreset() {
+      if (!currentPresetKey) {
+        alert("Bạn chưa chọn từ vựng nào để xóa.");
+        return;
+      }
+      if (confirm(`Bạn có chắc muốn xóa từ '${PRESETS[currentPresetKey].word}'?`)) {
+        delete PRESETS[currentPresetKey];
+        savePresetsToStorage();
+        const remainingKeys = Object.keys(PRESETS);
+        if (remainingKeys.length > 0) {
+          loadPreset(remainingKeys[0]);
+        } else {
+          currentPresetKey = null;
+          clearForm();
+        }
+        renderPresetButtons();
+      }
+    }
+
+    function nextPreset() {
+      const keys = Object.keys(PRESETS);
+      if (keys.length === 0) return;
+      let idx = keys.indexOf(currentPresetKey);
+      idx = (idx + 1) % keys.length;
+      loadPreset(keys[idx]);
+    }
+
+    function prevPreset() {
+      const keys = Object.keys(PRESETS);
+      if (keys.length === 0) return;
+      let idx = keys.indexOf(currentPresetKey);
+      idx = (idx - 1 + keys.length) % keys.length;
+      loadPreset(keys[idx]);
+    }
+
+    // Load preset into form inputs & card
+    function loadPreset(key) {
+      const data = PRESETS[key];
+      if (!data) return;
+      currentPresetKey = key;
+
+      inputWord.value = data.word || '';
+      inputIpa.value = data.ipa || '';
+      inputMeaning.value = data.meaning || '';
+      inputImage.value = data.image || '';
+      inputExampleEn.value = data.exampleEn || '';
+      inputExampleVi.value = data.exampleVi || '';
+      inputAudioWord.value = data.audioWord || '';
+      inputAudioExample.value = data.audioExample || '';
+      inputPatternEn.value = data.patternEn || '';
+      inputPatternVi.value = data.patternVi || '';
+      inputCefrLevel.value = data.cefrLevel || '';
+
+      flashcard.update(data);
+      renderPresetButtons();
+    }
+
+    // Sync input changes to card and auto-save
+    function updateCardFromForm() {
+      const data = getFormData();
+      flashcard.update(data);
+      
+      // Tự động lưu (auto-save) nếu đang mở một preset
+      if (currentPresetKey) {
+        PRESETS[currentPresetKey] = data;
+        savePresetsToStorage();
+        
+        // Cập nhật text của nút preset hiện tại
+        const activeBtn = Array.from(presetContainer.children).find(btn => btn.classList.contains('bg-primary/20'));
+        if (activeBtn) {
+          activeBtn.textContent = data.word || currentPresetKey;
+        }
+      }
+    }
+
+    // Clear form inputs and flashcard
+    function clearForm(e) {
+      if (e) e.preventDefault();
+      currentPresetKey = null;
+      renderPresetButtons();
+      form.reset();
+      flashcard.update({
+        word: '',
+        ipa: '',
+        meaning: '',
+        image: '',
+        exampleEn: '',
+        exampleVi: '',
+        audioWord: '',
+        audioExample: '',
+        patternEn: '',
+        patternVi: '',
+        cefrLevel: ''
+      });
+    }
+
+    // Export current fields as JSON string to clipboard
+    function copyJsonToClipboard(e) {
+      if (e) e.preventDefault();
+      
+      const data = getFormData();
+      
+      // Validate word field is filled
+      if (!data.word) {
+        showStatus('Lỗi: Hãy nhập Từ Vựng!', 'red');
+        inputWord.focus();
+        return;
+      }
+
+      const jsonString = JSON.stringify(data, null, 2);
+      
+      navigator.clipboard.writeText(jsonString).then(() => {
+        showStatus('Đã sao chép JSON!', 'green');
+      }).catch(err => {
+        console.error('Không thể sao chép vào clipboard: ', err);
+        alert('Có lỗi xảy ra khi sao chép JSON.');
+      });
+    }
+
+    // Copy current Card HTML representation to clipboard
+    function copyHtmlToClipboard(e) {
+      if (e) e.preventDefault();
+      
+      // Validate word field is filled
+      if (!inputWord.value.trim()) {
+        showStatus('Lỗi: Hãy nhập Từ Vựng!', 'red');
+        inputWord.focus();
+        return;
+      }
+
+      // Clone container to avoid mutating the active preview card
+      const cardClone = document.getElementById('flashcard-container').cloneNode(true);
+      
+      // Clean up inline styles like transform that were added during dynamic flipping
+      cardClone.removeAttribute('style');
+      
+      const htmlString = cardClone.outerHTML;
+
+      navigator.clipboard.writeText(htmlString).then(() => {
+        showStatus('Đã sao chép HTML!', 'green');
+      }).catch(err => {
+        console.error('Không thể sao chép HTML vào clipboard: ', err);
+        alert('Có lỗi xảy ra khi sao chép HTML.');
+      });
+    }
+
+    // Show status message under form header
+    function showStatus(text, type) {
+      formStatus.textContent = text;
+      if (type === 'green') {
+        formStatus.className = 'text-xs font-semibold px-2 py-0.5 rounded-md bg-green-500/10 text-green-500 border border-green-500/20';
+      } else if (type === 'red') {
+        formStatus.className = 'text-xs font-semibold px-2 py-0.5 rounded-md bg-red-500/10 text-red-500 border border-red-500/20';
+      } else {
+        formStatus.className = 'text-xs font-semibold px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20';
+      }
+
+      setTimeout(() => {
+        formStatus.textContent = 'Chế độ: Biên Tập Field';
+        formStatus.className = 'text-xs font-semibold px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20';
+      }, 2500);
+    }
+
+    // --- Screenshot Logic ---
+    async function captureCurrentBackCard(word) {
+      const cardElement = document.getElementById('flashcard-container');
+      if (!cardElement) throw new Error("Không tìm thấy thẻ.");
+
+      // Find the back side
+      const backSide = document.getElementById('capture-frame');
+      if (!backSide) throw new Error("Không tìm thấy mặt sau của thẻ.");
+
+      // Clone the back side to an off-screen element
+      const clone = backSide.cloneNode(true);
+      
+      // Reset classes to avoid fixed heights and 3D transforms
+      clone.className = "flex flex-col rounded-2xl overflow-hidden shadow-2xl relative bg-cover bg-center";
+      clone.style.width = cardElement.offsetWidth + "px"; // Match current width
+      clone.style.position = "absolute";
+      clone.style.left = "-9999px"; // Hide off-screen
+      clone.style.top = "0";
+      clone.style.height = "auto"; // Auto height for fit content
+      clone.style.transform = "none"; // Remove rotation
+      
+      // Remove fixed height from inner scroll areas so it can expand
+      const hFulls = clone.querySelectorAll('.h-full');
+      hFulls.forEach(el => el.classList.remove('h-full'));
+      const innerScroll = clone.querySelector('[data-radix-scroll-area-viewport]');
+      if(innerScroll) {
+          innerScroll.style.overflow = 'visible';
+          innerScroll.style.maxHeight = 'none';
+      }
+
+      document.body.appendChild(clone);
+      
+      // Wait for images in the clone to load completely before screenshotting
+      const imgs = Array.from(clone.querySelectorAll('img'));
+      await Promise.all(imgs.map(img => {
+        // Force eager loading for off-screen clone
+        img.removeAttribute('loading'); 
+        if (img.complete) return Promise.resolve();
+        return new Promise(resolve => {
+          img.onload = resolve;
+          img.onerror = resolve;
+          // Fallback timeout to prevent infinite hang if image fails to trigger events
+          setTimeout(resolve, 2000);
+        });
+      }));
+
+      // Hack to fix html2canvas bug with ::after pseudo-elements positioning
+      const fancyUnderlines = clone.querySelectorAll('.fancy-underline');
+      if (fancyUnderlines.length > 0) {
+        const style = document.createElement('style');
+        style.innerHTML = '.fancy-underline::after { display: none !important; }';
+        clone.appendChild(style);
+
+        fancyUnderlines.forEach(el => {
+          const underline = document.createElement('span');
+          underline.style.position = 'absolute';
+          underline.style.top = '100%';
+          underline.style.marginTop = '4px';
+          underline.style.left = '0';
+          underline.style.right = '0';
+          underline.style.height = '2px';
+          let primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+          if(!primaryColor) primaryColor = '142.1 76.2% 36.3%'; // fallback green
+          underline.style.backgroundColor = `hsl(${primaryColor} / 0.5)`;
+          underline.style.zIndex = '1';
+          el.appendChild(underline);
+        });
+      }
+
+      // Take Back Screenshot with html2canvas
+      const canvasBack = await html2canvas(clone, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+        logging: false
+      });
+      
+      // Remove clone
+      document.body.removeChild(clone);
+
+      addScreenshotToTable(word, 'Mặt Sau', canvasBack);
+    }
+
+    async function takeScreenshots(e) {
+      if (e) e.preventDefault();
+      
+      const word = inputWord.value.trim() || 'Thẻ Mới';
+      const btnScreenshot = document.getElementById('btn-screenshot');
+      const originalBtnText = btnScreenshot.innerHTML;
+      
+      try {
+        btnScreenshot.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Đang xử lý...`;
+        
+        await captureCurrentBackCard(word);
+        
+        showStatus('Đã chụp ảnh thẻ!', 'green');
+
+      } catch (err) {
+        console.error('Lỗi chụp ảnh:', err);
+        alert('Có lỗi xảy ra khi chụp ảnh. Vui lòng thử lại.');
+      } finally {
+        btnScreenshot.innerHTML = originalBtnText;
+      }
+    }
+
+    async function takeAllScreenshots(e) {
+      if (e) e.preventDefault();
+      
+      const keys = Object.keys(PRESETS);
+      if(keys.length === 0) {
+        alert("Không có từ vựng nào trong danh sách!");
+        return;
+      }
+
+      const btnAll = document.getElementById('btn-screenshot-all');
+      const originalText = btnAll.innerHTML;
+      
+      try {
+        btnAll.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Đang chụp...`;
+        
+        const originalPreset = currentPresetKey;
+        
+        for(const key of keys) {
+            loadPreset(key);
+            // Đợi DOM cập nhật và ảnh (nếu có) load
+            await new Promise(r => setTimeout(r, 400)); 
+            
+            const word = PRESETS[key].word || key;
+            await captureCurrentBackCard(word);
+        }
+        
+        // Trả lại preset ban đầu
+        if(originalPreset) loadPreset(originalPreset);
+        
+        showStatus('Đã chụp toàn bộ!', 'green');
+      } catch(err) {
+         console.error('Lỗi chụp ảnh hàng loạt:', err);
+         alert('Có lỗi khi chụp ảnh hàng loạt.');
+      } finally {
+         btnAll.innerHTML = originalText;
+      }
+    }
+
+    function addScreenshotToTable(word, side, canvas) {
+      const tbody = document.getElementById('screenshot-tbody');
+      const emptyRow = document.getElementById('empty-screenshot-row');
+      if (emptyRow) {
+        emptyRow.remove();
+      }
+
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        
+        const imgUrl = URL.createObjectURL(blob);
+        const tr = document.createElement('tr');
+        tr.className = 'bg-card border-b border-border hover:bg-secondary/20 transition-colors';
+        
+        tr.innerHTML = `
+          <td class="px-6 py-4 font-semibold text-primary font-heading">${word}</td>
+          <td class="px-6 py-4">${side}</td>
+          <td class="px-6 py-4">
+            <img src="${imgUrl}" alt="${word} ${side}" class="h-24 w-auto rounded-lg border border-border shadow-md object-contain bg-background" />
+          </td>
+          <td class="px-6 py-4 text-center">
+            <button class="btn-copy-img px-4 py-2 text-[11px] uppercase tracking-wider font-bold bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border border-primary/20 rounded-lg transition-all shadow-sm">
+              Copy Ảnh
+            </button>
+            <button class="btn-remove-img mt-2 px-4 py-2 text-[11px] uppercase tracking-wider font-bold bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 rounded-lg transition-all shadow-sm">
+              Xóa
+            </button>
+          </td>
+        `;
+
+        const btnCopy = tr.querySelector('.btn-copy-img');
+        btnCopy.addEventListener('click', async () => {
+          try {
+            const item = new ClipboardItem({ 'image/png': blob });
+            await navigator.clipboard.write([item]);
+            
+            const originalText = btnCopy.innerText;
+            btnCopy.innerText = 'ĐÃ COPY!';
+            btnCopy.classList.add('bg-green-500', 'text-white', 'border-green-500');
+            btnCopy.classList.remove('bg-primary/10', 'text-primary', 'border-primary/20');
+            setTimeout(() => {
+              btnCopy.innerText = originalText;
+              btnCopy.classList.remove('bg-green-500', 'text-white', 'border-green-500');
+              btnCopy.classList.add('bg-primary/10', 'text-primary', 'border-primary/20');
+            }, 2000);
+          } catch (err) {
+            console.error('Không thể copy ảnh:', err);
+            alert('Trình duyệt của bạn có thể không hỗ trợ copy ảnh trực tiếp qua Clipboard API.');
+          }
+        });
+
+        const btnRemove = tr.querySelector('.btn-remove-img');
+        btnRemove.addEventListener('click', () => {
+          URL.revokeObjectURL(imgUrl);
+          tr.remove();
+          if (tbody.children.length === 0) {
+            tbody.innerHTML = `<tr id="empty-screenshot-row" class="bg-card"><td colspan="4" class="px-6 py-8 text-center text-muted-foreground italic">Chưa có ảnh nào được chụp. Nhấn "Chụp ảnh thẻ" để bắt đầu.</td></tr>`;
+          }
+        });
+
+        tbody.appendChild(tr);
+      }, 'image/png');
+    }
+  </script>
+</body>
+</html>
