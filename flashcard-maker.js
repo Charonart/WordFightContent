@@ -46,7 +46,7 @@ class Flashcard {
     const backSide = this.container.querySelector('.bg-card');
     if (backSide) {
       this.backWord = backSide.querySelector('h2');
-      this.image = backSide.querySelector('img');
+      this.image = backSide.querySelector('#back-word-img');
       this.ipa = backSide.querySelector('p.font-mono');
       
       // Meaning is the next p element or has text-xl/font-semibold classes
