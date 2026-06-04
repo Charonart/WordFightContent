@@ -342,22 +342,17 @@
         <h2 class="text-xs font-bold tracking-widest uppercase text-muted-foreground font-heading">Xem trước (Click để lật thẻ)</h2>
       </div>
       
-      <!-- Flashcard HTML Structure (Copied exactly from user's request) -->
+      <!-- Flashcard HTML Structure -->
       <div id="wordfight-card-root" class="flex-1 w-full flex flex-col items-center justify-center p-4 min-h-0 overflow-hidden">
-        <div class="w-full max-w-sm md:max-w-md [perspective:1000px] relative flex-1 flex items-center justify-center">
-          <div id="flashcard-container" class="relative w-full rounded-2xl shadow-2xl cursor-pointer transition-transform duration-700 [transform-style:preserve-3d] h-full min-h-[400px] [transform:rotateY(180deg)]">
+        <div class="w-full max-w-sm md:max-w-md relative flex-1 flex items-center justify-center">
+          <div id="flashcard-container" class="relative w-full rounded-2xl shadow-2xl h-full max-h-[80vh] aspect-[4/5]">
             
-            <!-- Mặt trước (Front) -->
-            <div class="absolute inset-0 flex flex-col items-center justify-center [backface-visibility:hidden] p-4 md:p-6 text-center rounded-2xl overflow-hidden bg-background">
-              <h2 id="front-word" class="text-4xl md:text-5xl font-bold text-primary text-center">alive</h2>
-            </div>
-            
-            <!-- Mặt sau (Back) -->
-            <div id="capture-frame" class="absolute inset-0 flex flex-col [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-2xl overflow-hidden bg-cover bg-center" style="background-image: url('./background.jpeg');">
+            <!-- Mặt Thẻ Đơn (Single Face) -->
+            <div id="capture-frame" class="absolute inset-0 flex flex-col rounded-2xl overflow-hidden bg-cover bg-center w-full h-full" style="background-image: url('./background.jpeg');">
               <!-- Blur overlay -->
               <div class="absolute inset-0 bg-black/10 backdrop-blur-[10px] z-0"></div>
               
-              <div dir="ltr" class="relative z-10 overflow-hidden h-full w-full flex flex-col items-center justify-center p-3" style="position: relative; --radix-scroll-area-corner-width: 0px; --radix-scroll-area-corner-height: 0px;">
+              <div dir="ltr" class="relative z-10 overflow-hidden h-full w-full flex flex-col items-center justify-center p-3" style="position: relative;">
                 <style>
                   [data-radix-scroll-area-viewport]{scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}
                   [data-radix-scroll-area-viewport]::-webkit-scrollbar{display:none}
@@ -488,11 +483,16 @@
     "meaning": "quả táo",
     "image": "https://link-to-image...",
     "exampleEn": "I eat an *apple* every day.",
-    "exampleVi": "Tôi ăn một *quả táo* mỗi ngày."
+    "exampleVi": "Tôi ăn một *quả táo* mỗi ngày.",
+    "patternEn": "The green *apple* is very sweet.",
+    "patternVi": "Quả *táo* xanh rất ngọt.",
+    "cefrLevel": "A1",
+    "audioWord": "https://...",
+    "audioExample": "https://..."
   }
 ]</pre>
         </div>
-        <p>Danh sách khóa (key): <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">word</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">ipa</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">meaning</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">image</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">exampleEn</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">exampleVi</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">audioWord</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">audioExample</code>.</p>
+        <p>Danh sách khóa (key): <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">word</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">ipa</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">meaning</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">image</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">exampleEn</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">exampleVi</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">patternEn</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">patternVi</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">cefrLevel</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">audioWord</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">audioExample</code>.</p>
       </div>
     </details>
     <textarea id="import-json-textarea" class="w-full h-48 bg-secondary/50 border border-border rounded-xl p-3 text-sm focus:outline-none focus:border-primary/50 font-mono resize-none wordfight-scrollbar" placeholder='[\n  {\n    "word": "apple",\n    "meaning": "quả táo"\n  }\n]'></textarea>
@@ -966,20 +966,19 @@
       const cardElement = document.getElementById('flashcard-container');
       if (!cardElement) throw new Error("Không tìm thấy thẻ.");
 
-      // Find the back side
       const backSide = document.getElementById('capture-frame');
       if (!backSide) throw new Error("Không tìm thấy mặt sau của thẻ.");
 
       // Clone the back side to an off-screen element
       const clone = backSide.cloneNode(true);
       
-      // Reset classes to avoid fixed heights and 3D transforms
-      clone.className = "flex flex-col rounded-2xl overflow-hidden shadow-2xl relative bg-cover bg-center";
-      clone.style.width = cardElement.offsetWidth + "px"; // Match current width
+      // Set precise sizes for clone to enforce exactly 1080x1350 output
+      // We render it at 1080px wide and 1350px tall to make sure it's 100% correct proportions
+      clone.style.width = "400px";
+      clone.style.height = "500px"; // 4:5 aspect ratio
       clone.style.position = "absolute";
       clone.style.left = "-9999px"; // Hide off-screen
       clone.style.top = "0";
-      clone.style.height = "auto"; // Auto height for fit content
       clone.style.transform = "none"; // Remove rotation
       
       // Remove fixed height from inner scroll areas so it can expand
@@ -1030,10 +1029,11 @@
         });
       }
 
-      // Take Back Screenshot with html2canvas
+      // Take Screenshot with html2canvas (Enforce exactly 1080x1350 px output)
+      // Since clone is 400x500, a scale of 2.7 gives exactly 1080x1350 px
       const canvasBack = await html2canvas(clone, {
         backgroundColor: null,
-        scale: 2,
+        scale: 2.7,
         useCORS: true,
         logging: false
       });

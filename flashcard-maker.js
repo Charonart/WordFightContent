@@ -40,13 +40,7 @@ class Flashcard {
       || this.container.querySelector('#flashcard-container')
       || this.container.querySelector('.relative.w-full.rounded-2xl.shadow-2xl');
 
-    // 2. Front Side Elements (inside bg-background)
-    const frontSide = this.container.querySelector('.bg-background');
-    if (frontSide) {
-      this.frontWord = frontSide.querySelector('h2');
-    } else {
-      this.frontWord = this.container.querySelectorAll('h2')[0];
-    }
+    // Front side is removed. Only back side remains.
 
     // 3. Back Side Elements (inside bg-card)
     const backSide = this.container.querySelector('.bg-card');
@@ -219,15 +213,9 @@ class Flashcard {
     if (!data) return;
     this.data = data;
 
-    // 1. Reset card face to Front when word changes
-    this.flip(false);
-
-    // 2. Set Front side word
-    if (this.frontWord) {
-      this.frontWord.textContent = data.word || '';
-    }
-
-    // 3. Set Back side word
+    // Reset card flip is no longer needed since it's a single face
+    
+    // Set word
     if (this.backWord) {
       this.backWord.textContent = data.word || '';
     }
