@@ -78,6 +78,7 @@ class Flashcard {
         }
         this.btnPlayExample = exampleWrapper.querySelector('button');
       }
+      this.bgLayer = this.container.querySelector('#card-bg-layer');
     }
   }
 
@@ -213,6 +214,11 @@ class Flashcard {
   update(data) {
     if (!data) return;
     this.data = data;
+
+    // Update background image
+    if (this.bgLayer && data.bgImage) {
+      this.bgLayer.style.backgroundImage = `url('${data.bgImage}')`;
+    }
 
     // 1. Reset card face to Front when word changes
     this.flip(false);

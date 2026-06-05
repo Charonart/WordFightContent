@@ -77,6 +77,7 @@ class Flashcard {
       this.patternEn = this.container.querySelector('#back-pattern-en');
       this.patternVi = this.container.querySelector('#back-pattern-vi');
       this.cefrLevel = this.container.querySelector('#back-cefr');
+      this.bgLayer = this.container.querySelector('#card-bg-layer');
     }
   }
 
@@ -212,6 +213,11 @@ class Flashcard {
   update(data) {
     if (!data) return;
     this.data = data;
+
+    // Update background image
+    if (this.bgLayer && data.bgImage) {
+      this.bgLayer.style.backgroundImage = `url('${data.bgImage}')`;
+    }
 
     // Reset card flip is no longer needed since it's a single face
     
