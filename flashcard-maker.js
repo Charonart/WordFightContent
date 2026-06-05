@@ -223,8 +223,9 @@ class Flashcard {
     // 4. Update Word image
     if (this.image) {
       if (data.image) {
+        this.image.crossOrigin = "anonymous";
         this.image.src = data.image;
-        this.image.alt = data.word || 'word image';
+        this.image.alt = data.word || "word image";
         
         // Ensure image container parent wrapper is visible if hidden
         const wrapper = this.image.closest('.w-32') || this.image.parentElement;
@@ -279,8 +280,8 @@ class Flashcard {
       let content = data.patternEn || '';
       let hasMarkdown = content.includes('*');
       if (hasMarkdown) {
-        content = content.replace(/\*\*(.*?)\*\*/g, '<span class="border-b border-white">$1</span>')
-                         .replace(/\*(.*?)\*/g, '<span class="border-b border-white">$1</span>');
+        content = content.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold fancy-underline">$1</strong>')
+                         .replace(/\*(.*?)\*/g, '<strong class="font-bold fancy-underline">$1</strong>');
       }
       this.patternEn.innerHTML = content;
     }
@@ -290,8 +291,8 @@ class Flashcard {
       let content = data.patternVi || '';
       const cleanContent = content.replace(/^(-\s*&gt;|\s*->\s*|→\s*)/, '').trim();
       let highlighted = cleanContent;
-      highlighted = highlighted.replace(/\*\*(.*?)\*\*/g, '<span class="border-b border-white font-bold">$1</span>')
-                               .replace(/\*(.*?)\*/g, '<span class="border-b border-white font-bold">$1</span>');
+      highlighted = highlighted.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold fancy-underline">$1</strong>')
+                               .replace(/\*(.*?)\*/g, '<strong class="font-bold fancy-underline">$1</strong>');
       this.patternVi.innerHTML = `→ ${highlighted}`;
     }
 
