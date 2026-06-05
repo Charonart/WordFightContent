@@ -7,8 +7,8 @@
   
   <!-- Tailwind CSS v3 CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- html2canvas cho Screenshot -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- html-to-image cho Screenshot -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
   <!-- JSZip cho Tải toàn bộ ảnh (.zip) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script>
@@ -98,30 +98,18 @@
 
     /* Custom WordFight specific classes */
     .fancy-underline {
-      display: inline-block;
-      position: relative;
       white-space: nowrap;
       color: hsl(var(--primary));
-    }
-    
-    .fancy-underline:after {
-      content: "";
-      position: absolute;
-      bottom: -2px;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background-color: hsl(var(--primary) / 0.5);
-      z-index: 1;
+      text-decoration: underline;
+      text-decoration-color: hsl(var(--primary) / 0.5);
+      text-decoration-thickness: 2px;
+      text-underline-offset: 2px;
     }
     
     .bg-\[\#6b8e23\] .fancy-underline {
       color: #ffffff !important;
-    }
-    
-    .bg-\[\#6b8e23\] .fancy-underline:after {
-      background-color: rgba(255, 255, 255, 0.6) !important;
-      bottom: -4px;
+      text-decoration-color: rgba(255, 255, 255, 0.6) !important;
+      text-underline-offset: 4px;
     }
 
     .btn-wf-silver {
@@ -1104,56 +1092,6 @@
       }, 2500);
     }
 
-    // Helper to generate blurred background image using small canvas scaling
-    function getBlurredImageDataUrl(imgUrl, blurFactor = 20) {
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.src = imgUrl;
-        img.onload = () => {
-          // Keep original aspect ratio but scale down if too large for performance
-          let w = img.width;
-          let h = img.height;
-          const maxDim = 1000;
-          if (w > maxDim || h > maxDim) {
-            if (w > h) {
-              h = Math.round(h * (maxDim / w));
-              w = maxDim;
-            } else {
-              w = Math.round(w * (maxDim / h));
-              h = maxDim;
-            }
-          }
-
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          
-          const scale = 1 / blurFactor;
-          const tempWidth = Math.max(1, Math.round(w * scale));
-          const tempHeight = Math.max(1, Math.round(h * scale));
-          
-          canvas.width = tempWidth;
-          canvas.height = tempHeight;
-          
-          ctx.drawImage(img, 0, 0, tempWidth, tempHeight);
-          
-          const blurCanvas = document.createElement('canvas');
-          const blurCtx = blurCanvas.getContext('2d');
-          blurCanvas.width = w;
-          blurCanvas.height = h;
-          
-          blurCtx.imageSmoothingEnabled = true;
-          blurCtx.imageSmoothingQuality = 'high';
-          blurCtx.drawImage(canvas, 0, 0, w, h);
-          
-          resolve(blurCanvas.toDataURL('image/jpeg', 0.85));
-        };
-        img.onerror = () => {
-          resolve(imgUrl);
-        };
-      });
-    }
-
     // --- Screenshot Logic ---
     async function captureCurrentBackCard(word) {
       // Randomize visual background for each capture
@@ -1165,102 +1103,28 @@
       const backSide = document.getElementById('capture-frame');
       if (!backSide) throw new Error("Không tìm thấy mặt sau của thẻ.");
 
-      // Clone the back side to an off-screen element
-      const clone = backSide.cloneNode(true);
-      
-      // Set precise sizes for clone to enforce exactly 1080x1350 output
-      // We render it at 1080px wide and 1350px tall to make sure it's 100% correct proportions
-      clone.style.width = "400px";
-      clone.style.height = "500px"; // 4:5 aspect ratio
-      clone.style.position = "absolute";
-      clone.style.left = "-9999px"; // Hide off-screen
-      clone.style.top = "0";
-      clone.style.transform = "none"; // Remove rotation
-      
-
-
-      document.body.appendChild(clone);
-
-      // Hack to fix html2canvas bug with object-fit: cover on back-word-img
-      const backWordImgClone = clone.querySelector('#back-word-img');
-      if (backWordImgClone && backWordImgClone.tagName === 'IMG') {
-        const parent = backWordImgClone.parentElement;
-        if (parent) {
-          parent.style.backgroundImage = `url('${backWordImgClone.src}')`;
-          parent.style.backgroundSize = 'cover';
-          parent.style.backgroundPosition = 'center';
-          backWordImgClone.style.display = 'none';
-        }
+      // Wait a moment for background to switch and images to load
+      await new Promise(r => setTimeout(r, 300));
+      if (document.fonts) {
+        await document.fonts.ready;
       }
 
-      // Wait for background images in the clone to load and pre-blur it using Canvas
-      const bgLayerClone = clone.querySelector('#card-bg-layer');
-      if (bgLayerClone) {
-        const bgStyle = bgLayerClone.style.backgroundImage;
-        const match = bgStyle.match(/url\(['"]?(.*?)['"]?\)/);
-        if (match && match[1]) {
-          const bgUrl = match[1];
-          const blurredDataUrl = await getBlurredImageDataUrl(bgUrl, 25);
-          bgLayerClone.style.backgroundImage = `url('${blurredDataUrl}')`;
-          bgLayerClone.style.filter = 'none'; // Clear CSS filter since image is pre-blurred
-        }
-      }
-      
-      // Wait for all remaining visible images in the clone to load completely before screenshotting
-      const imgs = Array.from(clone.querySelectorAll('img')).filter(img => img.style.display !== 'none');
-      await Promise.all(imgs.map(img => {
-        // Force eager loading for off-screen clone
-        img.removeAttribute('loading'); 
-        if (img.complete) return Promise.resolve();
-        return new Promise(resolve => {
-          img.onload = resolve;
-          img.onerror = resolve;
-          // Fallback timeout to prevent infinite hang if image fails to trigger events
-          setTimeout(resolve, 2000);
+      try {
+        // Take Screenshot with html-to-image (Enforce exactly 1080x1350 px output)
+        const canvasBack = await htmlToImage.toCanvas(backSide, {
+          pixelRatio: 2.7,
+          style: {
+            borderRadius: '0px',
+            transform: 'none'
+          },
+          useCORS: true
         });
-      }));
-
-      // Hack to fix html2canvas bug with ::after pseudo-elements positioning
-      const fancyUnderlines = clone.querySelectorAll('.fancy-underline');
-      if (fancyUnderlines.length > 0) {
-        const style = document.createElement('style');
-        style.innerHTML = '.fancy-underline::after { display: none !important; }';
-        clone.appendChild(style);
-
-        fancyUnderlines.forEach(el => {
-          const underline = document.createElement('span');
-          underline.style.position = 'absolute';
-          underline.style.top = '100%';
-          underline.style.marginTop = '5px';
-          underline.style.left = '0';
-          underline.style.right = '0';
-          underline.style.height = '2px';
-          let primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
-          if(!primaryColor) primaryColor = '142.1 76.2% 36.3%'; // fallback green
-          if (el.closest('.bg-\\[\\#6b8e23\\]') || el.closest('#back-pattern-en') || el.closest('#back-pattern-vi')) {
-            underline.style.backgroundColor = 'rgba(255, 255, 255, 0.6)';
-            underline.style.marginTop = '5px';
-          } else {
-            underline.style.backgroundColor = `hsl(${primaryColor} / 0.5)`;
-          }
-          underline.style.zIndex = '1';
-          el.appendChild(underline);
-        });
+        
+        addScreenshotToTable(word, 'Mặt Sau', canvasBack);
+      } catch (err) {
+        console.error("Lỗi khi render với html-to-image:", err);
+        throw err;
       }
-
-      // Take Screenshot with html2canvas (Enforce exactly 1080x1350 px output)
-      // Since clone is 400x500, a scale of 2.7 gives exactly 1080x1350 px
-      const canvasBack = await html2canvas(clone, {
-        backgroundColor: null,
-        scale: 2.7,
-        useCORS: true,
-        logging: false
-      });
-      
-      // Remove clone
-      document.body.removeChild(clone);
-
-      addScreenshotToTable(word, 'Mặt Sau', canvasBack);
     }
 
     async function takeScreenshots(e) {
