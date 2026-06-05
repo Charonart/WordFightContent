@@ -9,6 +9,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- html2canvas cho Screenshot -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- JSZip cho Tải toàn bộ ảnh (.zip) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -400,7 +402,13 @@
   <!-- Screenshot Panel -->
   <section class="max-w-7xl w-full mx-auto p-4 md:p-6 mb-8 mt-4">
     <div class="bg-card/50 backdrop-blur-md border border-border p-5 rounded-2xl shadow-sm flex flex-col gap-4">
-      <h2 class="text-sm font-bold tracking-wide uppercase text-muted-foreground font-heading">Ảnh đã chụp (Screenshots)</h2>
+      <div class="flex items-center justify-between flex-wrap gap-4">
+        <h2 class="text-sm font-bold tracking-wide uppercase text-muted-foreground font-heading">Ảnh đã chụp (Screenshots)</h2>
+        <button id="btn-download-all" class="hidden px-4 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md cursor-pointer flex items-center gap-1.5 transition-all select-none hover:scale-105 active:scale-[0.98]">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Tải toàn bộ (.zip)
+        </button>
+      </div>
       <div class="overflow-x-auto wordfight-scrollbar rounded-xl border border-border">
         <table class="w-full text-sm text-left text-foreground">
           <thead class="text-xs uppercase bg-secondary/80 border-b border-border">
@@ -515,6 +523,7 @@
     let flashcard = null;
     let form, formStatus, btnClear, btnCopyJson, btnCopyHtml, presetContainer;
     let inputWord, inputIpa, inputMeaning, inputImage, inputExampleEn, inputExampleVi, inputAudioWord, inputAudioExample;
+    let capturedScreenshots = [];
 
     // Load active theme
     const themeToggleBtn = document.getElementById('theme-toggle');
@@ -602,6 +611,11 @@
       const btnScreenshotAll = document.getElementById('btn-screenshot-all');
       if (btnScreenshotAll) {
         btnScreenshotAll.addEventListener('click', takeAllScreenshots);
+      }
+
+      const btnDownloadAll = document.getElementById('btn-download-all');
+      if (btnDownloadAll) {
+        btnDownloadAll.addEventListener('click', downloadAllScreenshots);
       }
 
       // Clear Form button click
@@ -1053,7 +1067,11 @@
       canvas.toBlob((blob) => {
         if (!blob) return;
         
+        const screenshotId = 'scr_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         const imgUrl = URL.createObjectURL(blob);
+        capturedScreenshots.push({ id: screenshotId, blob, word, side, imgUrl });
+        toggleDownloadAllButtonVisibility();
+
         const tr = document.createElement('tr');
         tr.className = 'bg-card border-b border-border hover:bg-secondary/20 transition-colors';
         
@@ -1063,15 +1081,28 @@
           <td class="px-6 py-4">
             <img src="${imgUrl}" alt="${word} ${side}" class="h-24 w-auto rounded-lg border border-border shadow-md object-contain bg-background" />
           </td>
-          <td class="px-6 py-4 text-center">
-            <button class="btn-copy-img px-4 py-2 text-[11px] uppercase tracking-wider font-bold bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border border-primary/20 rounded-lg transition-all shadow-sm">
+          <td class="px-6 py-4 text-center flex flex-col gap-2 items-center justify-center">
+            <button class="btn-copy-img px-4 py-2 w-28 text-[11px] uppercase tracking-wider font-bold bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border border-primary/20 rounded-lg transition-all shadow-sm">
               Copy Ảnh
             </button>
-            <button class="btn-remove-img mt-2 px-4 py-2 text-[11px] uppercase tracking-wider font-bold bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 rounded-lg transition-all shadow-sm">
+            <button class="btn-download-img px-4 py-2 w-28 text-[11px] uppercase tracking-wider font-bold bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white border border-blue-500/20 rounded-lg transition-all shadow-sm">
+              Tải Ảnh
+            </button>
+            <button class="btn-remove-img px-4 py-2 w-28 text-[11px] uppercase tracking-wider font-bold bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 rounded-lg transition-all shadow-sm">
               Xóa
             </button>
           </td>
         `;
+
+        const btnDownload = tr.querySelector('.btn-download-img');
+        btnDownload.addEventListener('click', () => {
+          const a = document.createElement('a');
+          a.href = imgUrl;
+          a.download = `flashcard_${word}_${Date.now()}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        });
 
         const btnCopy = tr.querySelector('.btn-copy-img');
         btnCopy.addEventListener('click', async () => {
@@ -1097,7 +1128,9 @@
         const btnRemove = tr.querySelector('.btn-remove-img');
         btnRemove.addEventListener('click', () => {
           URL.revokeObjectURL(imgUrl);
+          capturedScreenshots = capturedScreenshots.filter(item => item.id !== screenshotId);
           tr.remove();
+          toggleDownloadAllButtonVisibility();
           if (tbody.children.length === 0) {
             tbody.innerHTML = `<tr id="empty-screenshot-row" class="bg-card"><td colspan="4" class="px-6 py-8 text-center text-muted-foreground italic">Chưa có ảnh nào được chụp. Nhấn "Chụp ảnh thẻ" để bắt đầu.</td></tr>`;
           }
@@ -1105,6 +1138,65 @@
 
         tbody.appendChild(tr);
       }, 'image/png');
+    }
+
+    function toggleDownloadAllButtonVisibility() {
+      const btnDownloadAll = document.getElementById('btn-download-all');
+      if (btnDownloadAll) {
+        if (capturedScreenshots.length > 0) {
+          btnDownloadAll.classList.remove('hidden');
+        } else {
+          btnDownloadAll.classList.add('hidden');
+        }
+      }
+    }
+
+    async function downloadAllScreenshots(e) {
+      if (e) e.preventDefault();
+      if (capturedScreenshots.length === 0) {
+        alert("Chưa có ảnh nào được chụp để tải!");
+        return;
+      }
+
+      const btnDownloadAll = document.getElementById('btn-download-all');
+      const originalText = btnDownloadAll.innerHTML;
+      
+      try {
+        btnDownloadAll.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Đang nén...`;
+        
+        const zip = new JSZip();
+        const nameCount = {};
+        
+        capturedScreenshots.forEach((item) => {
+          let baseName = `flashcard_${item.word}_${item.side.replace(/\s+/g, '_')}`;
+          if (nameCount[baseName] === undefined) {
+            nameCount[baseName] = 1;
+          } else {
+            nameCount[baseName]++;
+            baseName = `${baseName}_${nameCount[baseName]}`;
+          }
+          zip.file(`${baseName}.png`, item.blob);
+        });
+        
+        const content = await zip.generateAsync({ type: "blob" });
+        const zipUrl = URL.createObjectURL(content);
+        
+        const a = document.createElement('a');
+        a.href = zipUrl;
+        a.download = `flashcards_${Date.now()}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        setTimeout(() => URL.revokeObjectURL(zipUrl), 10000);
+        
+        showStatus('Đã tải bộ ảnh (.zip)!', 'green');
+      } catch (err) {
+        console.error('Lỗi khi nén zip ảnh:', err);
+        alert('Có lỗi xảy ra khi nén và tải ảnh. Vui lòng thử lại.');
+      } finally {
+        btnDownloadAll.innerHTML = originalText;
+      }
     }
   </script>
 </body>
