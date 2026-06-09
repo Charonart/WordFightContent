@@ -239,11 +239,15 @@
         
         <!-- Form Inputs container (Scrollable) -->
         <form id="flashcard-form" class="flex-1 overflow-y-auto pr-1 flex flex-col gap-4 wordfight-scrollbar max-h-[500px] lg:max-h-[520px]">
-          <!-- Từ vựng & Phiên âm -->
-          <div class="grid grid-cols-2 gap-4">
+          <!-- Từ vựng, Loại từ & Phiên âm -->
+          <div class="grid grid-cols-3 gap-4">
             <div class="flex flex-col gap-1.5">
               <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider" for="input-word">Từ vựng <span class="text-red-500 font-bold">*</span></label>
               <input id="input-word" type="text" class="px-3.5 py-2 rounded-xl bg-secondary/35 border border-border text-foreground focus:outline-none focus:border-primary/50 text-sm transition-all focus-within:shadow-[0_5px_0_0_hsl(var(--primary)/0.35)]" placeholder="Ví dụ: alive" required>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider" for="input-type">Loại từ</label>
+              <input id="input-type" type="text" class="px-3.5 py-2 rounded-xl bg-secondary/35 border border-border text-foreground focus:outline-none focus:border-primary/50 text-sm transition-all focus-within:shadow-[0_5px_0_0_hsl(var(--primary)/0.35)]" placeholder="Ví dụ: adj">
             </div>
             <div class="flex flex-col gap-1.5">
               <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider" for="input-ipa">Phiên âm (IPA)</label>
@@ -406,7 +410,10 @@
                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-volume2 lucide-volume-2 h-5 w-5"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"></path><path d="M16 9a5 5 0 0 1 0 6"></path><path d="M19.364 18.364a9 9 0 0 0 0-12.728"></path></svg>
                         </button>
                       </div>
-                      <p id="back-word-ipa" class="font-mono text-muted-foreground text-xs">/əˈlaɪv/</p>
+                      <div class="flex items-center gap-1.5 justify-center">
+                        <p id="back-word-ipa" class="font-mono text-muted-foreground text-xs">/əˈlaɪv/</p> -
+                        <span id="back-word-type" class="font-mono text-muted-foreground text-xs">(adj)</span>
+                      </div>
                       <p id="back-word-meaning" class="text-lg font-semibold leading-normal">còn sống, sống động, hoạt động</p>
                     </div>
                     
@@ -510,6 +517,7 @@
 [
   {
     "word": "apple",
+    "wordType": "n",
     "ipa": "/ˈæp.əl/",
     "meaning": "quả táo",
     "image": "https://link-to-image...",
@@ -523,7 +531,7 @@
   }
 ]</pre>
         </div>
-        <p>Danh sách khóa (key): <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">word</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">ipa</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">meaning</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">image</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">exampleEn</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">exampleVi</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">patternEn</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">patternVi</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">cefrLevel</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">audioWord</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">audioExample</code>.</p>
+        <p>Danh sách khóa (key): <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">word</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">wordType</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">ipa</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">meaning</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">image</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">exampleEn</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">exampleVi</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">patternEn</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">patternVi</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">cefrLevel</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">audioWord</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">audioExample</code>.</p>
       </div>
     </details>
     <textarea id="import-json-textarea" class="w-full h-48 bg-secondary/50 border border-border rounded-xl p-3 text-sm focus:outline-none focus:border-primary/50 font-mono resize-none wordfight-scrollbar" placeholder='[\n  {\n    "word": "apple",\n    "meaning": "quả táo"\n  }\n]'></textarea>
@@ -541,6 +549,7 @@
     let PRESETS = {
       alive: {
         word: "alive",
+        wordType: "adj",
         ipa: "/əˈlaɪv/",
         meaning: "còn sống, sống động, hoạt động",
         image: "https://images.unsplash.com/photo-1585745422697-1b42b98aac14?crop=entropy&cs=tinysrgb&fit=crop&fm=webp&ixid=M3w4MjQ0MDh8MHwxfHNlYXJjaHwxfHxsaXZpbmclMjBwZXJzb258ZW58MHwwfHx8MTc3NzI3OTU2OXww&ixlib=rb-4.1.0&q=80&w=144&h=144",
@@ -554,6 +563,7 @@
       },
       miracle: {
         word: "miracle",
+        wordType: "n",
         ipa: "/ˈmɪr.ə.kəl/",
         meaning: "phép màu, điều kỳ diệu, kỳ tích",
         image: "https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?crop=entropy&cs=tinysrgb&fit=crop&fm=webp&q=80&w=144&h=144",
@@ -567,6 +577,7 @@
       },
       antigravity: {
         word: "antigravity",
+        wordType: "n",
         ipa: "/ˌæn.tiˈɡræv.ə.ti/",
         meaning: "kháng trọng lực, chống lực hút trái đất",
         image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?crop=entropy&cs=tinysrgb&fit=crop&fm=webp&q=80&w=144&h=144",
@@ -580,6 +591,7 @@
       },
       sparkle: {
         word: "sparkle",
+        wordType: "v",
         ipa: "/ˈspɑː.kəl/",
         meaning: "lấp lánh, lóng lánh",
         image: "https://images.unsplash.com/photo-1490730141103-6cac27aaab94?crop=entropy&cs=tinysrgb&fit=crop&fm=webp&q=80&w=144&h=144",
@@ -604,7 +616,7 @@
     let currentPresetKey = null;
     let flashcard = null;
     let form, formStatus, btnClear, btnCopyJson, btnCopyHtml, presetContainer;
-    let inputWord, inputIpa, inputMeaning, inputImage, inputExampleEn, inputExampleVi, inputAudioWord, inputAudioExample, inputPatternEn, inputPatternVi, inputCefrLevel;
+    let inputWord, inputType, inputIpa, inputMeaning, inputImage, inputExampleEn, inputExampleVi, inputAudioWord, inputAudioExample, inputPatternEn, inputPatternVi, inputCefrLevel;
     let currentBgImage = './background.jpeg';
     let capturedScreenshots = [];
 
@@ -624,6 +636,7 @@
       presetContainer = document.getElementById('preset-container');
 
       inputWord = document.getElementById('input-word');
+      inputType = document.getElementById('input-type');
       inputIpa = document.getElementById('input-ipa');
       inputMeaning = document.getElementById('input-meaning');
       inputImage = document.getElementById('input-image');
@@ -820,6 +833,7 @@
     function getFormData() {
       return {
         word: inputWord.value.trim(),
+        wordType: inputType.value.trim(),
         ipa: inputIpa.value.trim(),
         meaning: inputMeaning.value.trim(),
         image: inputImage.value.trim(),
@@ -936,6 +950,7 @@
       currentPresetKey = key;
 
       inputWord.value = data.word || '';
+      inputType.value = data.wordType || '';
       inputIpa.value = data.ipa || '';
       inputMeaning.value = data.meaning || '';
       inputImage.value = data.image || '';
@@ -977,6 +992,7 @@
       form.reset();
       flashcard.update({
         word: '',
+        wordType: '',
         ipa: '',
         meaning: '',
         image: '',
@@ -1228,7 +1244,8 @@
         btnDownload.addEventListener('click', () => {
           const a = document.createElement('a');
           a.href = imgUrl;
-          a.download = `flashcard_${word}_${Date.now()}.png`;
+          const rowIndex = Array.from(tbody.children).indexOf(tr) + 1;
+          a.download = `${rowIndex} - ${word}.png`;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
@@ -1297,8 +1314,9 @@
         const zip = new JSZip();
         const nameCount = {};
         
+        let fileIndex = 1;
         capturedScreenshots.forEach((item) => {
-          let baseName = `flashcard_${item.word}_${item.side.replace(/\s+/g, '_')}`;
+          let baseName = `${fileIndex} - ${item.word}`;
           if (nameCount[baseName] === undefined) {
             nameCount[baseName] = 1;
           } else {
@@ -1306,6 +1324,7 @@
             baseName = `${baseName}_${nameCount[baseName]}`;
           }
           zip.file(`${baseName}.png`, item.blob);
+          fileIndex++;
         });
         
         const content = await zip.generateAsync({ type: "blob" });

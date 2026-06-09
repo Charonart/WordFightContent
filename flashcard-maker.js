@@ -46,6 +46,7 @@ class Flashcard {
     const backSide = this.container.querySelector('.bg-card');
     if (backSide) {
       this.backWord = backSide.querySelector('h2');
+      this.backWordType = backSide.querySelector('#back-word-type');
       this.image = backSide.querySelector('#back-word-img');
       this.ipa = backSide.querySelector('p.font-mono');
       
@@ -224,6 +225,16 @@ class Flashcard {
     // Set word
     if (this.backWord) {
       this.backWord.textContent = data.word || '';
+    }
+
+    // Set word type
+    if (this.backWordType) {
+      if (data.wordType) {
+        this.backWordType.textContent = `(${data.wordType})`;
+        this.backWordType.style.display = 'inline-block';
+      } else {
+        this.backWordType.style.display = 'none';
+      }
     }
 
     // 4. Update Word image
