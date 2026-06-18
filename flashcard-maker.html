@@ -721,6 +721,27 @@
       // Real-time synchronization
       form.addEventListener('input', updateCardFromForm);
 
+      // Paste event listener for images
+      document.addEventListener('paste', (e) => {
+        const clipboardItems = e.clipboardData ? e.clipboardData.items : [];
+        for (const item of clipboardItems) {
+          if (item.type.indexOf('image') === 0) {
+            const blob = item.getAsFile();
+            if (blob) {
+              const reader = new FileReader();
+              reader.onload = (event) => {
+                inputImage.value = event.target.result;
+                updateCardFromForm();
+                showStatus('Đã dán ảnh từ Clipboard!', 'green');
+              };
+              reader.readAsDataURL(blob);
+              e.preventDefault();
+              break;
+            }
+          }
+        }
+      });
+
       // Background Presets Click Event
       document.querySelectorAll('.btn-bg-preset').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -792,8 +813,16 @@
           alert("Vui lòng nhập dữ liệu JSON.");
           return;
         }
+        let parsed;
         try {
-          const parsed = JSON.parse(val);
+          parsed = JSON.parse(val);
+        } catch(e) {
+          alert("Lỗi phân tích JSON. Vui lòng kiểm tra lại định dạng.");
+          console.error(e);
+          return;
+        }
+
+        try {
           let count = 0;
           
           if (Array.isArray(parsed)) {
@@ -822,8 +851,8 @@
           } else {
             alert("Không tìm thấy từ vựng nào hợp lệ trong JSON. Hãy đảm bảo mỗi mục có trường 'word'.");
           }
-        } catch(e) {
-          alert("Lỗi phân tích JSON. Vui lòng kiểm tra lại định dạng.");
+        } catch (e) {
+          alert("Đã xảy ra lỗi trong quá trình nhập dữ liệu.");
           console.error(e);
         }
       });
@@ -861,7 +890,12 @@
     }
 
     function savePresetsToStorage() {
-      localStorage.setItem('wordfight-presets', JSON.stringify(PRESETS));
+      try {
+        localStorage.setItem('wordfight-presets', JSON.stringify(PRESETS));
+      } catch (e) {
+        console.warn("Could not save to localStorage. Quota might be exceeded.", e);
+        alert("Cảnh báo: Không thể lưu dữ liệu vào bộ nhớ trình duyệt (có thể do dung lượng ảnh quá lớn). Dữ liệu vẫn được tải vào bộ nhớ tạm để sử dụng.");
+      }
     }
 
     function renderPresetButtons() {
@@ -1182,22 +1216,36 @@
         
         const originalPreset = currentPresetKey;
         
+        let successCount = 0;
+        let failCount = 0;
+
         for(const key of keys) {
             loadPreset(key);
             // Đợi DOM cập nhật và ảnh (nếu có) load
             await new Promise(r => setTimeout(r, 400)); 
             
             const word = PRESETS[key].word || key;
-            await captureCurrentBackCard(word);
+            try {
+              await captureCurrentBackCard(word);
+              successCount++;
+            } catch (err) {
+              console.error(`Lỗi khi chụp thẻ ${word}:`, err);
+              failCount++;
+            }
         }
         
         // Trả lại preset ban đầu
         if(originalPreset) loadPreset(originalPreset);
         
-        showStatus('Đã chụp toàn bộ!', 'green');
+        if (failCount > 0) {
+          alert(`Đã chụp ${successCount} thẻ. Có ${failCount} thẻ bị lỗi (thường do link ảnh bị chặn CORS). Hãy kiểm tra lại các thẻ bị lỗi.`);
+          showStatus(`Hoàn tất (${failCount} lỗi)`, 'red');
+        } else {
+          showStatus('Đã chụp toàn bộ!', 'green');
+        }
       } catch(err) {
-         console.error('Lỗi chụp ảnh hàng loạt:', err);
-         alert('Có lỗi khi chụp ảnh hàng loạt.');
+         console.error('Lỗi quá trình chụp hàng loạt:', err);
+         alert('Có lỗi hệ thống khi chụp ảnh hàng loạt.');
       } finally {
          btnAll.innerHTML = originalText;
       }
@@ -1305,6 +1353,11 @@
         return;
       }
 
+      if (typeof JSZip === 'undefined') {
+        alert("Thư viện nén file (JSZip) chưa được tải hoặc bị chặn bởi trình duyệt. Hãy kiểm tra kết nối mạng hoặc tải lại trang.");
+        return;
+      }
+
       const btnDownloadAll = document.getElementById('btn-download-all');
       const originalText = btnDownloadAll.innerHTML;
       
@@ -1315,17 +1368,23 @@
         const nameCount = {};
         
         let fileIndex = 1;
-        capturedScreenshots.forEach((item) => {
-          let baseName = `${fileIndex} - ${item.word}`;
+        for (const item of capturedScreenshots) {
+          // Sanitize filename to avoid OS invalid characters
+          let safeWord = (item.word || 'word').replace(/[^a-zA-Z0-9_-]/g, '_');
+          let baseName = `${fileIndex} - ${safeWord}`;
+          
           if (nameCount[baseName] === undefined) {
             nameCount[baseName] = 1;
           } else {
             nameCount[baseName]++;
             baseName = `${baseName}_${nameCount[baseName]}`;
           }
-          zip.file(`${baseName}.png`, item.blob);
+          
+          // Convert Blob to ArrayBuffer for better JSZip compatibility across browsers
+          const arrayBuffer = await item.blob.arrayBuffer();
+          zip.file(`${baseName}.png`, arrayBuffer);
           fileIndex++;
-        });
+        }
         
         const content = await zip.generateAsync({ type: "blob" });
         const zipUrl = URL.createObjectURL(content);
@@ -1333,16 +1392,20 @@
         const a = document.createElement('a');
         a.href = zipUrl;
         a.download = `flashcards_${Date.now()}.zip`;
+        a.style.display = 'none';
         document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
         
-        setTimeout(() => URL.revokeObjectURL(zipUrl), 10000);
+        // Clean up
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(zipUrl);
+        }, 1000);
         
         showStatus('Đã tải bộ ảnh (.zip)!', 'green');
       } catch (err) {
         console.error('Lỗi khi nén zip ảnh:', err);
-        alert('Có lỗi xảy ra khi nén và tải ảnh. Vui lòng thử lại.');
+        alert('Có lỗi xảy ra khi nén file zip: ' + err.message);
       } finally {
         btnDownloadAll.innerHTML = originalText;
       }

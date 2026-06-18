@@ -240,7 +240,11 @@ class Flashcard {
     // 4. Update Word image
     if (this.image) {
       if (data.image) {
-        this.image.crossOrigin = "anonymous";
+        if (data.image.startsWith('data:')) {
+          this.image.removeAttribute('crossOrigin');
+        } else {
+          this.image.crossOrigin = "anonymous";
+        }
         this.image.src = data.image;
         this.image.alt = data.word || "word image";
         
