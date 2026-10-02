@@ -49,35 +49,18 @@ class Flashcard {
     }
 
     // 3. Back Side Elements (inside bg-card)
-    const backSide = this.container.querySelector('.bg-card');
+    const backSide = this.container.querySelector('.bg-card') || this.container;
     if (backSide) {
-      this.backWord = backSide.querySelector('h2');
+      this.backWord = backSide.querySelector('#back-word') || backSide.querySelector('h2');
       this.image = backSide.querySelector('img');
-      this.ipa = backSide.querySelector('p.font-mono');
+      this.ipa = backSide.querySelector('#back-word-ipa') || backSide.querySelector('p.font-mono');
+      this.meaning = backSide.querySelector('#back-word-meaning') || backSide.querySelector('p.text-xl') || backSide.querySelector('p.font-semibold');
       
-      // Meaning is the next p element or has text-xl/font-semibold classes
-      this.meaning = backSide.querySelector('p.text-xl') || backSide.querySelector('p.font-semibold');
-      
-      // Pronunciation button for Word
-      // Located in the header div wrapper containing the h2
-      const titleWrapper = backSide.querySelector('h2')?.parentElement;
-      if (titleWrapper) {
-        this.btnPlayWord = titleWrapper.querySelector('button');
-      }
-
-      // Example rows and audio button
-      // Find the row containing text-center & justify-center gap-2
-      const exampleWrapper = backSide.querySelector('.w-full.flex.justify-center.items-center.gap-2.text-center');
-      if (exampleWrapper) {
-        const textContainer = exampleWrapper.querySelector('.flex-1');
-        if (textContainer) {
-          // English example is the first paragraph (usually p.text-sm.text-foreground)
-          this.exampleEn = textContainer.querySelector('p:not(.italic)');
-          // Vietnamese example is the second paragraph (usually p.italic)
-          this.exampleVi = textContainer.querySelector('p.italic') || textContainer.querySelectorAll('p')[1];
-        }
-        this.btnPlayExample = exampleWrapper.querySelector('button');
-      }
+      // Example rows
+      this.exampleEn = this.container.querySelector('#back-example-en') || backSide.querySelector('p:not(.italic)');
+      this.exampleVi = this.container.querySelector('#back-example-vi') || backSide.querySelector('p.italic');
+      this.explain = this.container.querySelector('#back-explain');
+      this.cefrLevel = this.container.querySelector('#back-cefr');
       this.bgLayer = this.container.querySelector('#card-bg-layer');
     }
   }
@@ -236,14 +219,26 @@ class Flashcard {
     // 4. Update Word image
     if (this.image) {
       if (data.image) {
-        if (data.image.startsWith('data:')) {
+        const rawImg = (data.image || '').trim();
+        if (rawImg.startsWith('data:')) {
           this.image.removeAttribute('crossOrigin');
+          this.image.src = rawImg;
         } else {
           this.image.crossOrigin = "anonymous";
+          if (/^https?:\/\//i.test(rawImg) && (rawImg.includes('pinimg.com') || rawImg.includes('phototourl.com'))) {
+            this.image.src = `https://images.weserv.nl/?url=${encodeURIComponent(rawImg)}`;
+          } else {
+            this.image.src = rawImg;
+          }
         }
-        this.image.src = data.image;
         this.image.alt = data.word || 'word image';
         
+        // Update image fit mode (cover, contain, fill, scale-down)
+        const fitMode = data.imageFit || 'cover';
+        this.image.style.objectFit = fitMode;
+        this.image.classList.remove('object-cover', 'object-contain', 'object-fill', 'object-scale-down');
+        this.image.classList.add(`object-${fitMode}`);
+
         // Ensure image container parent wrapper is visible if hidden
         const wrapper = this.image.closest('.w-32') || this.image.parentElement;
         if (wrapper) wrapper.style.display = 'block';
@@ -295,8 +290,9 @@ class Flashcard {
 }
 
 // Export for global availability or ES modules
+if (typeof window !== 'undefined') {
+  window.Flashcard = Flashcard;
+}
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = Flashcard;
-} else {
-  window.Flashcard = Flashcard;
 }

@@ -1,0 +1,22 @@
+{
+  "name": "wordfight",
+  "version": "1.0.0",
+  "description": "WordFight Flashcard App",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-packager . WordFight --platform=win32 --arch=x64 --out=dist --icon=icon.ico --ignore=\"^/dist\" --overwrite"
+  },
+  "build": {
+    "appId": "com.wordfight.app",
+    "productName": "WordFight",
+    "win": {
+      "target": "portable",
+      "icon": "icon.ico"
+    }
+  },
+  "devDependencies": {
+    "electron": "^42.5.0",
+    "electron-packager": "^17.1.2"
+  }
+}

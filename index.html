@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WordFight Flashcard Live Editor</title>
   
-  <!-- Tailwind CSS v3 CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- html-to-image cho Screenshot -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
-  <!-- JSZip cho Tải toàn bộ ảnh (.zip) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- Tailwind CSS v3 Local -->
+  <script src="./lib/tailwindcss.js"></script>
+  <!-- html-to-image cho Screenshot Local -->
+  <script src="./lib/html-to-image.min.js"></script>
+  <!-- JSZip cho Tải toàn bộ ảnh (.zip) Local -->
+  <script src="./lib/jszip.min.js"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -96,6 +96,15 @@
     .text-muted-foreground { color: hsl(var(--muted-foreground)); }
     .border-border { border-color: hsl(var(--border)); }
 
+    /* Modern Typography Text-Wrap Rules */
+    h1, h2, h3, h4, h5, h6, .font-heading, .text-balance, #back-word, #back-word-meaning {
+      text-wrap: balance;
+    }
+
+    p, .text-pretty, #back-example-en, #back-example-vi, #back-explain {
+      text-wrap: pretty;
+    }
+
     /* Custom WordFight specific classes */
     .fancy-underline {
       white-space: nowrap;
@@ -169,7 +178,7 @@
   <header class="w-full border-b border-border bg-card/65 backdrop-blur-md sticky top-0 z-30 px-6 py-4 flex items-center justify-between">
     <div class="flex items-center gap-3">
       <div class="bg-primary/20 text-primary p-2.5 rounded-xl border border-primary/30 flex items-center justify-center">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-swords"><polyline points="20 17 18 19 13 14 14 13 19 18 20 17"/><path d="m18 14 5-5-1-1-5 5v2g-2 2h2"/><polyline points="4 17 6 19 11 14 10 13 5 18 4 17"/><path d="m6 14-5-5 1-1 5 5v2g2 2h-2"/><path d="M3 21h18"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-swords"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><line x1="16" x2="20" y1="16" y2="20"/><line x1="19" x2="21" y1="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" x2="11" y1="11" y2="5"/><line x1="4" x2="8" y1="8" y2="4"/><line x1="3" x2="5" y1="5" y2="3"/></svg>
       </div>
       <div>
         <h1 class="text-xl font-bold tracking-tight font-heading flex items-center gap-2">
@@ -227,23 +236,41 @@
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
             Xóa
           </button>
+          <button id="btn-preset-delete-all" class="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider bg-rose-600/10 text-rose-600 hover:bg-rose-600/20 rounded-lg transition-colors" title="Xóa toàn bộ từ vựng">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            Xóa tất cả
+          </button>
         </div>
       </div>
       
       <!-- Field Editor Panel -->
       <div class="bg-card/50 backdrop-blur-md border border-border p-5 rounded-2xl shadow-sm flex-1 flex flex-col gap-4 min-h-[500px]">
         <div class="flex items-center justify-between">
-          <h2 class="text-sm font-bold tracking-wide uppercase text-muted-foreground font-heading font-heading">Trình chỉnh sửa nội dung</h2>
-          <span id="form-status" class="text-xs font-semibold px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20">Chế độ: Biên Tập Field</span>
+          <h2 class="text-sm font-bold tracking-wide uppercase text-muted-foreground font-heading">Trình chỉnh sửa nội dung</h2>
+          <span id="form-status" class="text-xs font-semibold px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20">Chế độ: Thẻ Từ Vựng</span>
+        </div>
+
+        <!-- Mode Switcher Tabs (Phương Án B: Banner Bìa & Thẻ Từ Vựng) -->
+        <div class="grid grid-cols-2 p-1 bg-secondary/80 rounded-xl border border-border gap-1">
+          <button id="tab-mode-banner" type="button" class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer text-muted-foreground hover:text-foreground">
+            <span class="text-sm">🎨</span> Banner Bìa (Cover)
+          </button>
+          <button id="tab-mode-flashcard" type="button" class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer bg-primary/20 text-primary-foreground border border-primary/30 shadow-sm">
+            <span class="text-sm">🃏</span> Thẻ Từ Vựng <span id="badge-vocab-count" class="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-mono">1</span>
+          </button>
         </div>
         
-        <!-- Form Inputs container (Scrollable) -->
+        <!-- 1. Flashcard Form (Scrollable) -->
         <form id="flashcard-form" class="flex-1 overflow-y-auto pr-1 flex flex-col gap-4 wordfight-scrollbar max-h-[500px] lg:max-h-[520px]">
-          <!-- Từ vựng & Phiên âm -->
-          <div class="grid grid-cols-2 gap-4">
+          <!-- Từ vựng, Loại từ & Phiên âm -->
+          <div class="grid grid-cols-3 gap-4">
             <div class="flex flex-col gap-1.5">
               <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider" for="input-word">Từ vựng <span class="text-red-500 font-bold">*</span></label>
               <input id="input-word" type="text" class="px-3.5 py-2 rounded-xl bg-secondary/35 border border-border text-foreground focus:outline-none focus:border-primary/50 text-sm transition-all focus-within:shadow-[0_5px_0_0_hsl(var(--primary)/0.35)]" placeholder="Ví dụ: alive" required>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider" for="input-type">Loại từ</label>
+              <input id="input-type" type="text" class="px-3.5 py-2 rounded-xl bg-secondary/35 border border-border text-foreground focus:outline-none focus:border-primary/50 text-sm transition-all focus-within:shadow-[0_5px_0_0_hsl(var(--primary)/0.35)]" placeholder="Ví dụ: adj">
             </div>
             <div class="flex flex-col gap-1.5">
               <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider" for="input-ipa">Phiên âm (IPA)</label>
@@ -258,9 +285,24 @@
               <input id="input-meaning" type="text" class="px-3.5 py-2 rounded-xl bg-secondary/35 border border-border text-foreground focus:outline-none focus:border-primary/50 text-sm transition-all focus-within:shadow-[0_5px_0_0_hsl(var(--primary)/0.35)]" placeholder="Ví dụ: còn sống" required>
             </div>
             <div class="flex flex-col gap-1.5">
-              <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider" for="input-image">Hình ảnh (URL)</label>
+              <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider" for="input-image">Hình ảnh (URL hoặc dán ảnh)</label>
               <input id="input-image" type="text" class="px-3.5 py-2 rounded-xl bg-secondary/35 border border-border text-foreground focus:outline-none focus:border-primary/50 text-sm transition-all focus-within:shadow-[0_5px_0_0_hsl(var(--primary)/0.35)]" placeholder="https://images.unsplash.com/...">
             </div>
+          </div>
+
+          <!-- Kiểu hiển thị ảnh (Cover, Fit, Stretch, Scale Down) -->
+          <div class="flex items-center justify-between p-2 rounded-xl bg-secondary/25 border border-border text-xs">
+            <span class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 pl-1">
+              <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><polyline points="21 15 16 10 5 21" stroke-width="2"/></svg>
+              Kiểu hiển thị ảnh:
+            </span>
+            <div class="flex items-center gap-1" id="image-fit-buttons">
+              <button type="button" data-fit="cover" class="btn-image-fit px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer bg-primary text-primary-foreground shadow-sm" title="Cover: Lấp đầy khung và tự cắt xén các cạnh thừa (Mặc định)">Cover</button>
+              <button type="button" data-fit="contain" class="btn-image-fit px-2.5 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer bg-secondary/60 text-muted-foreground hover:text-foreground hover:bg-secondary" title="Fit (Contain): Giữ nguyên tỉ lệ và hiển thị trọn vẹn toàn bộ ảnh">Fit</button>
+              <button type="button" data-fit="fill" class="btn-image-fit px-2.5 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer bg-secondary/60 text-muted-foreground hover:text-foreground hover:bg-secondary" title="Stretch (Fill): Kéo dãn ảnh khít 100% hai chiều">Stretch</button>
+              <button type="button" data-fit="scale-down" class="btn-image-fit px-2.5 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer bg-secondary/60 text-muted-foreground hover:text-foreground hover:bg-secondary" title="Scale Down: Tự thu nhỏ nếu ảnh lớn, giữ nguyên nếu ảnh nhỏ">Scale Down</button>
+            </div>
+            <input type="hidden" id="input-image-fit" value="cover">
           </div>
 
           <!-- Ví dụ English & Vietnamese -->
@@ -276,16 +318,121 @@
             <span class="text-[10px] text-muted-foreground ml-1">Mẹo: Bọc từ trong dấu * hoặc ** để in đậm và gạch chân (VD: *còn sống*)</span>
           </div>
 
-          <!-- Audio Word & Example -->
-          <div class="grid grid-cols-2 gap-4">
-            <div class="flex flex-col gap-1.5">
-              <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider" for="input-audio-word">Audio Từ vựng (URL)</label>
-              <input id="input-audio-word" type="text" class="px-3.5 py-2 rounded-xl bg-secondary/35 border border-border text-foreground focus:outline-none focus:border-primary/50 text-sm transition-all focus-within:shadow-[0_5px_0_0_hsl(var(--primary)/0.35)]" placeholder="Link mp3 (tùy chọn)">
+          <!-- Giải thích thêm & CEFR -->
+          <div class="grid grid-cols-2 gap-4 border-t border-border pt-4 mt-2">
+            <div class="col-span-2 flex flex-col gap-1.5">
+              <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider" for="input-explain">Giải thích thêm</label>
+              <textarea id="input-explain" rows="3" class="px-3.5 py-2 rounded-xl bg-secondary/35 border border-border text-foreground focus:outline-none focus:border-primary/50 text-sm transition-all resize-none focus-within:shadow-[0_5px_0_0_hsl(var(--primary)/0.35)]" placeholder="Ví dụ: Cụm từ đi kèm, ghi chú ngữ pháp hoặc câu giải thích ngữ cảnh..."></textarea>
+              <span class="text-[10px] text-muted-foreground ml-1">Mẹo: Bọc từ trong dấu * hoặc ** để in đậm và gạch chân (VD: *embark*)</span>
             </div>
-            <div class="flex flex-col gap-1.5">
-              <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider" for="input-audio-example">Audio Ví dụ (URL)</label>
-              <input id="input-audio-example" type="text" class="px-3.5 py-2 rounded-xl bg-secondary/35 border border-border text-foreground focus:outline-none focus:border-primary/50 text-sm transition-all focus-within:shadow-[0_5px_0_0_hsl(var(--primary)/0.35)]" placeholder="Link mp3 (tùy chọn)">
+            <div class="col-span-2 flex flex-col gap-1.5">
+              <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider" for="input-cefr-level">Trình độ CEFR</label>
+              <input id="input-cefr-level" type="text" class="px-3.5 py-2 rounded-xl bg-secondary/35 border border-border text-foreground focus:outline-none focus:border-primary/50 text-sm transition-all focus-within:shadow-[0_5px_0_0_hsl(var(--primary)/0.35)]" placeholder="Ví dụ: B2">
             </div>
+          </div>
+        </form>
+
+        <!-- 2. Banner Form (Scrollable, Phương Án B) -->
+        <form id="banner-form" class="hidden flex-1 overflow-y-auto pr-1 flex flex-col gap-4 wordfight-scrollbar max-h-[500px] lg:max-h-[520px]">
+          <!-- Opening Text (Phần mở đầu ở trên) -->
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider" for="input-banner-opening">
+                Opening Text (ở trên) <span class="text-red-500 font-bold">*</span>
+              </label>
+              <span class="text-[10px] font-semibold text-green-600 dark:text-green-400">Màu Xanh Ô Liu</span>
+            </div>
+            <textarea id="input-banner-opening" rows="2" class="px-3.5 py-2 rounded-xl bg-secondary/35 border border-border text-foreground focus:outline-none focus:border-primary/50 text-sm font-semibold transition-all resize-none focus-within:shadow-[0_5px_0_0_hsl(var(--primary)/0.35)]" placeholder="Bẻ khóa từ vựng&#10;tiếng Anh với"></textarea>
+            
+            <!-- Quick Suggestion Buttons -->
+            <div class="flex flex-wrap gap-1.5 items-center mt-0.5">
+              <span class="text-[10px] text-muted-foreground">Mẫu gợi ý:</span>
+              <button type="button" class="btn-opening-quick px-2 py-0.5 text-[10px] font-medium rounded-md bg-secondary border border-border hover:bg-primary/20 text-foreground transition-all cursor-pointer" data-text="Bẻ khóa từ vựng&#10;tiếng Anh với">Bẻ khóa từ vựng</button>
+              <button type="button" class="btn-opening-quick px-2 py-0.5 text-[10px] font-medium rounded-md bg-secondary border border-border hover:bg-primary/20 text-foreground transition-all cursor-pointer" data-text="Tổng hợp 50 từ vựng&#10;hay nhất chủ đề">Tổng hợp 50 từ</button>
+              <button type="button" class="btn-opening-quick px-2 py-0.5 text-[10px] font-medium rounded-md bg-secondary border border-border hover:bg-primary/20 text-foreground transition-all cursor-pointer" data-text="Từ vựng ăn điểm&#10;Speaking & Writing">Từ vựng ăn điểm</button>
+            </div>
+          </div>
+
+          <!-- Subject (Chủ đề từ vựng ở dưới) -->
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider" for="input-banner-subject">
+                Subject (Chủ đề từ vựng ở dưới) <span class="text-red-500 font-bold">*</span>
+              </label>
+              <span class="text-[10px] font-semibold text-purple-600 dark:text-purple-400">Màu Tím Đậm Nổi Bật</span>
+            </div>
+            <textarea id="input-banner-subject" rows="2" class="px-3.5 py-2.5 rounded-xl bg-secondary/35 border border-border text-foreground font-black uppercase tracking-tight text-lg focus:outline-none focus:border-primary/50 transition-all resize-none focus-within:shadow-[0_5px_0_0_hsl(var(--primary)/0.35)]" placeholder="GREEK&#10;ROOT"></textarea>
+            <span class="text-[10px] text-muted-foreground ml-1">Mẹo: Có thể xuống dòng để tách thành 2 hàng chữ to (Ví dụ: GREEK&#10;ROOT)</span>
+          </div>
+
+          <!-- Font Size Tùy Chỉnh & Auto-fit -->
+          <div class="bg-secondary/40 border border-border rounded-xl p-3 flex flex-col gap-2.5">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Cỡ chữ (Font Size)</span>
+              <button id="btn-banner-auto-size" type="button" class="text-[10px] font-semibold text-primary hover:underline cursor-pointer flex items-center gap-1 transition-all">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Đặt lại Tự động (Auto-fit)
+              </button>
+            </div>
+
+            <!-- Subject Font Size Slider -->
+            <div class="flex flex-col gap-1">
+              <div class="flex justify-between text-xs">
+                <span class="font-medium text-foreground">Subject (Chủ đề):</span>
+                <span id="label-banner-size-subject" class="font-bold text-purple-600 dark:text-purple-400 font-mono text-[11px]">Tự động (~62px)</span>
+              </div>
+              <input type="range" id="input-banner-size-subject" min="0" max="72" step="2" value="0" class="w-full accent-purple-600 cursor-pointer h-1.5 bg-secondary rounded-lg">
+              <div class="flex justify-between text-[9px] text-muted-foreground font-mono">
+                <span>0 (Auto)</span>
+                <span>36px</span>
+                <span>50px</span>
+                <span>72px</span>
+              </div>
+            </div>
+
+            <!-- Opening Font Size Slider -->
+            <div class="flex flex-col gap-1 mt-0.5">
+              <div class="flex justify-between text-xs">
+                <span class="font-medium text-foreground">Opening Text (Mở đầu):</span>
+                <span id="label-banner-size-opening" class="font-bold text-green-600 dark:text-green-400 font-mono text-[11px]">Tự động (~23px)</span>
+              </div>
+              <input type="range" id="input-banner-size-opening" min="0" max="32" step="1" value="0" class="w-full accent-green-600 cursor-pointer h-1.5 bg-secondary rounded-lg">
+              <div class="flex justify-between text-[9px] text-muted-foreground font-mono">
+                <span>0 (Auto)</span>
+                <span>18px</span>
+                <span>24px</span>
+                <span>32px</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tùy chỉnh màu sắc Banner -->
+          <div class="border-t border-border pt-3 mt-1 flex flex-col gap-2.5">
+            <label class="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Tùy chỉnh màu sắc Banner</label>
+            <div class="grid grid-cols-3 gap-2">
+              <div class="flex flex-col gap-1 bg-secondary/40 p-2 rounded-xl border border-border">
+                <span class="text-[10px] text-muted-foreground font-semibold">Opening Text</span>
+                <div class="flex items-center gap-1.5">
+                  <input type="color" id="input-banner-color-opening" value="#6b8e23" class="w-6 h-6 rounded cursor-pointer border border-border bg-transparent p-0">
+                  <span id="label-banner-color-opening" class="text-[10px] font-mono text-foreground font-semibold">#6b8e23</span>
+                </div>
+              </div>
+              <div class="flex flex-col gap-1 bg-secondary/40 p-2 rounded-xl border border-border">
+                <span class="text-[10px] text-muted-foreground font-semibold">Subject Text</span>
+                <div class="flex items-center gap-1.5">
+                  <input type="color" id="input-banner-color-subject" value="#801c65" class="w-6 h-6 rounded cursor-pointer border border-border bg-transparent p-0">
+                  <span id="label-banner-color-subject" class="text-[10px] font-mono text-foreground font-semibold">#801c65</span>
+                </div>
+              </div>
+              <div class="flex flex-col gap-1 bg-secondary/40 p-2 rounded-xl border border-border">
+                <span class="text-[10px] text-muted-foreground font-semibold">Khối Mũi Tên</span>
+                <div class="flex items-center gap-1.5">
+                  <input type="color" id="input-banner-color-footer" value="#6b8e23" class="w-6 h-6 rounded cursor-pointer border border-border bg-transparent p-0">
+                  <span id="label-banner-color-footer" class="text-[10px] font-mono text-foreground font-semibold">#6b8e23</span>
+                </div>
+              </div>
+            </div>
+            <button id="btn-banner-reset-colors" type="button" class="self-start text-[10px] text-muted-foreground hover:text-primary underline cursor-pointer">Khôi phục màu mặc định</button>
           </div>
         </form>
 
@@ -352,84 +499,129 @@
     </section>
 
     <!-- RIGHT PANEL: Flashcard Preview (lg:col-span-7) -->
-    <section class="lg:col-span-7 flex flex-col items-center justify-center p-4 md:p-6 bg-card/30 border border-border rounded-3xl min-h-[500px] relative shadow-sm">
+    <section id="preview-panel" class="lg:col-span-7 flex flex-col items-center justify-center p-4 md:p-6 bg-card/30 border border-border rounded-3xl min-h-[500px] relative shadow-sm">
       <div class="absolute top-4 left-6">
-        <h2 class="text-xs font-bold tracking-widest uppercase text-muted-foreground font-heading">Xem trước (Click để lật thẻ)</h2>
+        <h2 id="preview-panel-title" class="text-xs font-bold tracking-widest uppercase text-muted-foreground font-heading">Xem trước Thẻ Flashcard</h2>
+      </div>
+
+      <!-- Preview Loading Overlay -->
+      <div id="preview-loading-overlay" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-40 rounded-3xl flex flex-col items-center justify-center gap-3 transition-opacity duration-300 opacity-0 pointer-events-none">
+        <div class="relative w-12 h-12">
+          <div class="absolute inset-0 rounded-full border-4 border-primary/20"></div>
+          <div class="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+        </div>
+        <p id="preview-loading-text" class="text-sm font-bold text-white tracking-wide font-heading">Đang xử lý...</p>
       </div>
       
-      <!-- Flashcard HTML Structure (Copied exactly from user's request) -->
+      <!-- Flashcard HTML Structure -->
       <div id="wordfight-card-root" class="flex-1 w-full flex flex-col items-center justify-center p-4 min-h-0 overflow-hidden">
-        <div class="w-full max-w-sm md:max-w-md [perspective:1000px] relative flex-1 flex items-center justify-center">
-          <div id="flashcard-container" class="relative w-full rounded-2xl shadow-2xl cursor-pointer transition-transform duration-700 [transform-style:preserve-3d] h-full min-h-[400px] [transform:rotateY(180deg)]">
+        <div id="preview-wrapper" class="w-full max-w-sm md:max-w-md relative flex-1 aspect-[4/5] max-h-[80vh] overflow-hidden rounded-2xl shadow-2xl mx-auto border border-border bg-card/10">
+          <div id="flashcard-container" class="absolute top-0 left-0 bg-transparent origin-top-left" style="width: 400px; height: 500px;">
             
-            <!-- Mặt trước (Front) -->
-            <div class="absolute inset-0 flex flex-col items-center justify-center [backface-visibility:hidden] p-4 md:p-6 text-center rounded-2xl overflow-hidden bg-background">
-              <h2 id="front-word" class="text-4xl md:text-5xl font-bold text-primary text-center">alive</h2>
-            </div>
-            
-            <!-- Mặt sau (Back) -->
-            <div id="capture-frame" class="absolute inset-0 flex flex-col [backface-visibility:hidden] [transform:rotateY(180deg)] overflow-hidden rounded-2xl">
+            <!-- Mặt Thẻ Đơn (Single Face) -->
+            <div id="capture-frame" class="absolute inset-0 flex flex-col rounded-2xl overflow-hidden w-full h-full">
               <!-- Blurred background layer -->
-              <div id="card-bg-layer" class="absolute inset-0 bg-cover bg-center scale-110 transition-all duration-300" style="background-image: url('./background.jpeg'); filter: blur(10px); z-index: 0;"></div>
-              <!-- Glass overlay for readability -->
-              <div class="absolute inset-0 bg-card/85 z-0"></div>
+              <div id="card-bg-layer" class="absolute inset-0 bg-cover bg-center scale-110 transition-all duration-300" style="background-image: url('./background.jpeg'); filter: blur(20px); z-index: 0;"></div>
+              <!-- Dark overlay -->
+              <div class="absolute inset-0 bg-black/10 z-0"></div>
               
-              <div dir="ltr" class="relative overflow-hidden h-full w-full z-10" style="position: relative; --radix-scroll-area-corner-width: 0px; --radix-scroll-area-corner-height: 0px;">
-                <style>
-                  [data-radix-scroll-area-viewport]{scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}
-                  [data-radix-scroll-area-viewport]::-webkit-scrollbar{display:none}
-                </style>
-                <div data-radix-scroll-area-viewport="" class="h-full w-full rounded-[inherit] !block !max-w-full !min-w-0" style="overflow: hidden scroll; display: block; max-width: 100%; min-width: 0px;">
-                  <div style="min-width: 100%; display: table;">
-                    <div class="!block !w-full" style="display: block; width: 100%;">
-                      <div class="p-4 md:p-6 flex flex-col items-center text-center gap-3">
-                        
-                        <!-- Ảnh đại diện -->
-                        <div class="w-32 h-32 md:w-36 md:h-36 bg-secondary rounded-xl shadow-inner overflow-hidden relative flex-shrink-0">
-                          <img id="back-word-img" alt="alive" loading="lazy" decoding="async" data-nimg="fill" class="object-cover" src="https://images.unsplash.com/photo-1585745422697-1b42b98aac14?crop=entropy&amp;cs=tinysrgb&amp;fit=crop&amp;fm=webp&amp;ixid=M3w4MjQ0MDh8MHwxfHNlYXJjaHwxfHxsaXZpbmclMjBwZXJzb258ZW58MHwwfHx8MTc3NzI3OTU2OXww&amp;ixlib=rb-4.1.0&amp;q=80&amp;w=144&amp;h=144" style="position: absolute; height: 100%; width: 100%; inset: 0px; color: transparent;">
-                        </div>
-                        
-                        <!-- Từ và Phát âm -->
-                        <div class="space-y-0.5 w-full flex flex-col items-center">
-                          <div class="relative w-full flex items-center justify-center">
-                            <h2 id="back-word" class="text-3xl font-bold text-primary">alive</h2>
-                            <button id="btn-play-word" class="inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-bold ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 transition-transform duration-100 cursor-pointer select-none hover:bg-accent hover:text-accent-foreground hover:scale-100 active:scale-[0.97] shadow-none border-0 h-9 w-9 text-muted-foreground flex-shrink-0 absolute right-0" type="button">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-volume2 lucide-volume-2 h-5 w-5"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"></path><path d="M16 9a5 5 0 0 1 0 6"></path><path d="M19.364 18.364a9 9 0 0 0 0-12.728"></path></svg>
-                            </button>
-                          </div>
-                          <p id="back-word-ipa" class="font-mono text-muted-foreground">/əˈlaɪv/</p>
-                          <p id="back-word-meaning" class="text-xl font-semibold">còn sống, sống động, hoạt động</p>
-                        </div>
-                        
-                        <!-- Đường gạch ngang ngăn cách -->
-                        <div data-orientation="horizontal" role="none" class="shrink-0 bg-border h-[1px] w-full my-1.5"></div>
-                        
-                        <!-- Ví dụ và phát âm ví dụ -->
-                        <div class="w-full flex justify-center items-center gap-2 text-center mb-4">
-                          <div class="flex-1 text-foreground text-sm">
-                            <p id="back-example-en" class="text-sm text-foreground">
-                              <span><span>It is a miracle that he is still </span><strong class="font-bold fancy-underline text-primary">alive</strong><span> after the accident.</span></span>
-                            </p>
-                            <p id="back-example-vi" class="text-sm italic text-muted-foreground">
-                              -&gt; <span><span>Thật kỳ diệu khi anh ấy vẫn </span><strong class="font-bold fancy-underline text-primary">còn sống</strong><span> sau vụ tai nạn.</span></span>
-                            </p>
-                          </div>
-                          <button id="btn-play-example" class="inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-bold ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 transition-transform duration-100 cursor-pointer select-none hover:bg-accent hover:text-accent-foreground hover:scale-100 active:scale-[0.97] shadow-none border-0 h-8 w-8 text-muted-foreground flex-shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-volume2 lucide-volume-2 h-5 w-5"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"></path><path d="M16 9a5 5 0 0 1 0 6"></path><path d="M19.364 18.364a9 9 0 0 0 0-12.728"></path></svg>
-                          </button>
-                        </div>
-                        
+              <!-- 1. Flashcard Content Wrapper -->
+              <div dir="ltr" class="relative z-10 w-full h-full overflow-hidden" id="flashcard-content-wrapper">
+                
+                <!-- White Box -->
+                <div class="bg-card rounded-[28px] shadow-xl flex flex-col items-center text-center overflow-hidden absolute z-10" style="width: 320px; height: 308px; left: 40px; top: 25px;">
+                  <div class="absolute top-3 left-4 z-20 opacity-90">
+                    <img src="./logo.png" alt="Logo" class="h-8 w-auto drop-shadow-md">
+                  </div>
+                  <div class="flex flex-col items-center text-center gap-2 w-full" style="padding: 12px 16px 8px 16px;">
+                    <!-- Ảnh đại diện -->
+                    <div class="w-[100px] h-[100px] bg-white rounded-2xl shadow-inner overflow-hidden relative flex-shrink-0 flex items-center justify-center">
+                      <img id="back-word-img" crossorigin="anonymous" referrerpolicy="no-referrer" alt="word image" loading="lazy" decoding="async" data-nimg="fill" class="object-cover opacity-0 transition-opacity duration-200" src="" style="position: absolute; height: 100%; width: 100%; inset: 0px; color: transparent;">
+                      <!-- Image Loading Spinner -->
+                      <div id="img-loading-spinner" class="absolute inset-0 flex items-center justify-center bg-white/80 hidden">
+                        <svg class="animate-spin h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      </div>
+                    </div>
+                    
+                    <!-- Từ và Phiên âm -->
+                    <div class="space-y-0 w-full flex flex-col items-center">
+                      <div class="w-full flex items-center justify-center">
+                        <h2 id="back-word" class="text-3xl font-bold text-primary [text-wrap:balance]">alive</h2>
+                      </div>
+                      <div class="flex items-center gap-1.5 justify-center">
+                        <p id="back-word-ipa" class="font-mono text-muted-foreground text-xs">/əˈlaɪv/</p> -
+                        <span id="back-word-type" class="font-mono text-muted-foreground text-xs">(adj)</span>
+                      </div>
+                      <p id="back-word-meaning" class="text-lg font-semibold leading-normal [text-wrap:balance]">còn sống, sống động, hoạt động</p>
+                    </div>
+                    
+                    <!-- Đường gạch ngang ngăn cách -->
+                    <div data-orientation="horizontal" role="none" class="shrink-0 bg-border h-[1px] w-full my-1"></div>
+                    
+                    <!-- Ví dụ -->
+                    <div class="w-full flex justify-center items-center text-center mb-0">
+                      <div class="flex-1 text-foreground text-xs leading-snug">
+                        <p id="back-example-en" class="text-xs text-foreground [text-wrap:pretty]">
+                          <span><span>It is a miracle that he is still </span><strong class="font-bold fancy-underline text-primary">alive</strong><span> after the accident.</span></span>
+                        </p>
+                        <p id="back-example-vi" class="text-[11px] italic text-muted-foreground mt-0.5 [text-wrap:pretty]">
+                          -&gt; <span><span>Thật kỳ diệu khi anh ấy vẫn </span><strong class="font-bold fancy-underline text-primary">còn sống</strong><span> sau vụ tai nạn.</span></span>
+                        </p>
                       </div>
                     </div>
                   </div>
+                </div>
+                
+                <!-- Green Box (Giải thích thêm & CEFR) -->
+                <div class="bg-[#6b8e23] text-white rounded-[24px] shadow-lg absolute z-0 overflow-hidden" style="width: 367.4px; height: 169.3px; left: 16.3px; bottom: 25px; padding: 35px 16px 15px 16px;">
+                  <div class="flex justify-between items-start gap-3">
+                    <div class="text-left flex-1 min-w-0">
+                      <h3 class="text-lg font-bold mb-2 [text-wrap:balance]">Giải thích thêm</h3>
+                      <div id="back-explain" class="text-xs text-white/95 leading-relaxed overflow-hidden [text-wrap:pretty]">The young entrepreneur decided to <strong class="font-bold fancy-underline">embark</strong> on an exciting business venture.<br>→ Nhà doanh nghiệp trẻ quyết định <strong class="font-bold fancy-underline">bắt đầu</strong> một dự án kinh doanh thú vị.</div>
+                    </div>
+                    <div class="text-right flex-shrink-0">
+                      <div class="text-[10px] font-bold uppercase tracking-widest text-white/80">CEFR</div>
+                      <div id="back-cefr" class="text-4xl md:text-5xl font-bold mt-1">B2</div>
+                    </div>
+                  </div>
+                </div>
+                
+              </div>
+
+              <!-- 2. Banner Content Wrapper (Phương Án B) -->
+              <div dir="ltr" class="relative z-10 w-full h-full overflow-hidden hidden" id="banner-content-wrapper">
+                <!-- White Box (Top) -->
+                <div id="banner-white-box" class="bg-card rounded-[28px] shadow-xl flex flex-col items-center justify-center text-center overflow-hidden absolute z-10 px-5 py-6 select-none" style="width: 320px; height: 320px; left: 40px; top: 25px;">
+                  <!-- Opening text (ở trên) -->
+                  <div id="banner-preview-opening" class="text-[#6b8e23] font-bold text-[23px] leading-[1.35] text-center [text-wrap:balance] transition-colors" style="font-family: var(--font-nunito), sans-serif; font-weight: 700;">
+                    Bẻ khóa từ vựng<br>tiếng Anh với
+                  </div>
+                  <!-- Vertical Spacer -->
+                  <div class="h-3.5"></div>
+                  <!-- Subject (chủ đề từ vựng ở dưới) -->
+                  <div id="banner-preview-subject" class="text-[#801c65] font-black text-[46px] leading-[1.05] tracking-tight uppercase text-center [text-wrap:balance] transition-colors" style="font-family: var(--font-nunito), sans-serif; font-weight: 900;">
+                    GREEK<br>ROOT
+                  </div>
+                </div>
+                
+                <!-- Green Box (Bottom) -->
+                <div id="banner-preview-footer" class="bg-[#6b8e23] text-white rounded-[24px] shadow-lg absolute z-0 overflow-hidden flex items-end justify-center pb-5 select-none transition-colors" style="width: 367.4px; height: 169.3px; left: 16.3px; bottom: 25px;">
+                  <svg class="w-60 h-8 text-white drop-shadow-sm" viewBox="0 0 220 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Dashed shaft -->
+                    <line x1="8" y1="12" x2="195" y2="12" stroke="white" stroke-width="4.5" stroke-dasharray="10 8" stroke-linecap="round" />
+                    <!-- Arrowhead > -->
+                    <polyline points="186,4 206,12 186,20" stroke="white" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
                 </div>
               </div>
             </div>
             
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
   </main>
 
@@ -448,15 +640,14 @@
           <thead class="text-xs uppercase bg-secondary/80 border-b border-border">
             <tr>
               <th scope="col" class="px-6 py-3 font-bold w-1/4">Từ vựng</th>
-              <th scope="col" class="px-6 py-3 font-bold w-1/6">Mặt thẻ</th>
               <th scope="col" class="px-6 py-3 font-bold">Ảnh xem trước</th>
-              <th scope="col" class="px-6 py-3 font-bold text-center w-1/5">Hành động</th>
+              <th scope="col" class="px-6 py-3 font-bold text-center w-1/4">Hành động</th>
             </tr>
           </thead>
           <tbody id="screenshot-tbody">
             <!-- Screenshot rows will be injected here -->
             <tr id="empty-screenshot-row" class="bg-card">
-              <td colspan="4" class="px-6 py-8 text-center text-muted-foreground italic">Chưa có ảnh nào được chụp. Nhấn "Chụp ảnh thẻ" để bắt đầu.</td>
+              <td colspan="3" class="px-6 py-8 text-center text-muted-foreground italic">Chưa có ảnh nào được chụp. Nhấn "Chụp ảnh thẻ" để bắt đầu.</td>
             </tr>
           </tbody>
         </table>
@@ -472,33 +663,131 @@
   <!-- Import JSON Modal -->
   <dialog id="import-json-modal" class="bg-card/95 border border-border rounded-2xl p-6 backdrop-blur-md shadow-2xl backdrop:bg-black/50 w-full max-w-lg m-auto text-foreground">
     <h3 class="text-lg font-bold mb-4 font-heading">Nhập JSON Hàng loạt</h3>
-    <p class="text-sm text-muted-foreground mb-4">Dán danh sách từ vựng (Array) hoặc Object JSON vào đây.</p>
+    <p class="text-sm text-muted-foreground mb-4">Dán gói trọn bộ (gồm Banner + từ vựng) hoặc danh sách từ vựng JSON vào đây.</p>
     
-    <details class="mb-4 text-xs bg-secondary/30 border border-border rounded-lg group">
-      <summary class="px-3 py-2 font-semibold cursor-pointer select-none text-primary flex items-center justify-between">
-        Xem hướng dẫn định dạng JSON
-        <svg class="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+    <details class="mb-4 text-xs bg-secondary/30 border border-border rounded-xl group overflow-hidden">
+      <summary class="px-3.5 py-2.5 font-semibold cursor-pointer select-none text-primary flex items-center justify-between hover:bg-secondary/40 transition-colors">
+        <span class="flex items-center gap-1.5 font-heading">
+          <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          Xem hướng dẫn định dạng JSON chi tiết (Phương Án B)
+        </span>
+        <svg class="w-4 h-4 transition-transform group-open:rotate-180 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
       </summary>
-      <div class="px-3 pb-3 text-muted-foreground border-t border-border mt-1 pt-2 space-y-2">
-        <p>Bắt buộc phải có trường <strong>"word"</strong>. Bạn không cần nhập đủ tất cả các trường (có thể bỏ trống những trường không cần thiết).</p>
-        <div>
-          <span class="font-bold text-foreground">Ví dụ định dạng Mảng (Array):</span>
-          <pre class="bg-secondary/80 border border-border p-2 rounded-md mt-1 font-mono text-[10px] text-foreground overflow-x-auto wordfight-scrollbar">
-[
-  {
-    "word": "apple",
-    "ipa": "/ˈæp.əl/",
-    "meaning": "quả táo",
-    "image": "https://link-to-image...",
-    "exampleEn": "I eat an *apple* every day.",
-    "exampleVi": "Tôi ăn một *quả táo* mỗi ngày."
-  }
-]</pre>
+      <div class="px-3.5 pb-3.5 text-muted-foreground border-t border-border mt-1 pt-2.5 space-y-3">
+        <p class="text-xs text-foreground/90">
+          Hỗ trợ định dạng <strong>Gói Trọn Bộ (Phương Án B)</strong> gồm cả thẻ bìa <code class="bg-purple-500/10 text-purple-600 dark:text-purple-400 px-1.5 py-0.5 rounded font-mono font-bold">banner</code> và danh sách từ vựng <code class="bg-primary/10 text-primary px-1.5 py-0.5 rounded font-mono font-bold">vocabularies</code> (hoặc dạng mảng Array truyền thống).
+        </p>
+
+        <!-- Bảng danh sách trường Banner -->
+        <div class="overflow-x-auto rounded-lg border border-border">
+          <table class="w-full text-[11px] text-left">
+            <thead class="bg-secondary/70 text-foreground font-bold border-b border-border">
+              <tr>
+                <th class="px-2.5 py-1.5">Trường trong "banner"</th>
+                <th class="px-2.5 py-1.5">Loại</th>
+                <th class="px-2.5 py-1.5">Ý nghĩa / Mô tả</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border/60 font-sans">
+              <tr>
+                <td class="px-2.5 py-1.5 font-mono text-primary font-bold">openingText</td>
+                <td class="px-2.5 py-1.5 text-emerald-600 font-semibold">Tùy chọn</td>
+                <td class="px-2.5 py-1.5">Phần mở đầu ở trên (VD: "Bẻ khóa từ vựng\ntiếng Anh với")</td>
+              </tr>
+              <tr>
+                <td class="px-2.5 py-1.5 font-mono text-purple-600 font-bold">subject</td>
+                <td class="px-2.5 py-1.5 text-emerald-600 font-semibold">Tùy chọn</td>
+                <td class="px-2.5 py-1.5">Chủ đề từ vựng ở dưới, in hoa nổi bật (VD: "GREEK ROOT")</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <p>Danh sách khóa (key): <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">word</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">ipa</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">meaning</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">image</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">exampleEn</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">exampleVi</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">audioWord</code>, <code class="bg-secondary border border-border px-1 py-0.5 rounded text-[10px] text-foreground">audioExample</code>.</p>
+
+        <!-- Bảng danh sách trường Từ vựng -->
+        <div class="overflow-x-auto rounded-lg border border-border">
+          <table class="w-full text-[11px] text-left">
+            <thead class="bg-secondary/70 text-foreground font-bold border-b border-border">
+              <tr>
+                <th class="px-2.5 py-1.5">Trường trong "vocabularies"</th>
+                <th class="px-2.5 py-1.5">Loại</th>
+                <th class="px-2.5 py-1.5">Ý nghĩa / Mô tả</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border/60 font-sans">
+              <tr>
+                <td class="px-2.5 py-1.5 font-mono text-primary font-bold">word</td>
+                <td class="px-2.5 py-1.5 text-red-500 font-semibold">Bắt buộc</td>
+                <td class="px-2.5 py-1.5">Từ vựng tiếng Anh (VD: "alive")</td>
+              </tr>
+              <tr>
+                <td class="px-2.5 py-1.5 font-mono text-foreground font-semibold">wordType</td>
+                <td class="px-2.5 py-1.5 text-muted-foreground">Tùy chọn</td>
+                <td class="px-2.5 py-1.5">Loại từ (VD: "n", "adj", "v", "adv")</td>
+              </tr>
+              <tr>
+                <td class="px-2.5 py-1.5 font-mono text-foreground font-semibold">ipa</td>
+                <td class="px-2.5 py-1.5 text-muted-foreground">Tùy chọn</td>
+                <td class="px-2.5 py-1.5">Phiên âm quốc tế (VD: "/əˈlaɪv/")</td>
+              </tr>
+              <tr>
+                <td class="px-2.5 py-1.5 font-mono text-foreground font-semibold">meaning</td>
+                <td class="px-2.5 py-1.5 text-muted-foreground">Tùy chọn</td>
+                <td class="px-2.5 py-1.5">Nghĩa tiếng Việt (VD: "còn sống, hoạt động")</td>
+              </tr>
+              <tr>
+                <td class="px-2.5 py-1.5 font-mono text-foreground font-semibold">image</td>
+                <td class="px-2.5 py-1.5 text-muted-foreground">Tùy chọn</td>
+                <td class="px-2.5 py-1.5">Link ảnh URL hoặc Data URL base64</td>
+              </tr>
+              <tr>
+                <td class="px-2.5 py-1.5 font-mono text-foreground font-semibold">exampleEn</td>
+                <td class="px-2.5 py-1.5 text-muted-foreground">Tùy chọn</td>
+                <td class="px-2.5 py-1.5">Ví dụ tiếng Anh (dùng *từ* để in đậm/gạch chân)</td>
+              </tr>
+              <tr>
+                <td class="px-2.5 py-1.5 font-mono text-foreground font-semibold">exampleVi</td>
+                <td class="px-2.5 py-1.5 text-muted-foreground">Tùy chọn</td>
+                <td class="px-2.5 py-1.5">Dịch ví dụ tiếng Việt (dùng *từ* để in đậm)</td>
+              </tr>
+              <tr>
+                <td class="px-2.5 py-1.5 font-mono text-foreground font-semibold">explain</td>
+                <td class="px-2.5 py-1.5 text-muted-foreground">Tùy chọn</td>
+                <td class="px-2.5 py-1.5">Giải thích thêm, ghi chú ngữ cảnh (dùng \n để xuống dòng)</td>
+              </tr>
+              <tr>
+                <td class="px-2.5 py-1.5 font-mono text-foreground font-semibold">cefrLevel</td>
+                <td class="px-2.5 py-1.5 text-muted-foreground">Tùy chọn</td>
+                <td class="px-2.5 py-1.5">Trình độ CEFR (VD: "A1", "A2", "B1", "B2", "C1", "C2")</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div>
+          <span class="font-bold text-foreground block mb-1">Ví dụ chuẩn Phương Án B (Gói Trọn Bộ):</span>
+          <pre class="bg-secondary/80 border border-border p-2.5 rounded-lg font-mono text-[10px] text-foreground overflow-x-auto wordfight-scrollbar leading-tight">{
+  "banner": {
+    "openingText": "Bẻ khóa từ vựng\ntiếng Anh với",
+    "subject": "GREEK ROOT"
+  },
+  "vocabularies": [
+    {
+      "word": "embark",
+      "wordType": "v",
+      "ipa": "/ɪmˈbɑːk/",
+      "meaning": "bắt đầu, dấn thân vào",
+      "image": "",
+      "exampleEn": "She decided to *embark* on a new career.",
+      "exampleVi": "Cô ấy quyết định *bắt đầu* một sự nghiệp mới.",
+      "explain": "embark on sth: bắt đầu việc gì mới mẻ.",
+      "cefrLevel": "B2"
+    }
+  ]
+}</pre>
+        </div>
       </div>
     </details>
-    <textarea id="import-json-textarea" class="w-full h-48 bg-secondary/50 border border-border rounded-xl p-3 text-sm focus:outline-none focus:border-primary/50 font-mono resize-none wordfight-scrollbar" placeholder='[\n  {\n    "word": "apple",\n    "meaning": "quả táo"\n  }\n]'></textarea>
+    <textarea id="import-json-textarea" class="w-full h-48 bg-secondary/50 border border-border rounded-xl p-3 text-sm focus:outline-none focus:border-primary/50 font-mono resize-none wordfight-scrollbar" placeholder='{\n  "banner": {\n    "openingText": "Bẻ khóa từ vựng\\ntiếng Anh với",\n    "subject": "GREEK ROOT"\n  },\n  "vocabularies": [\n    {\n      "word": "embark",\n      "wordType": "v",\n      "ipa": "/ɪmˈbɑːk/",\n      "meaning": "bắt đầu, dấn thân vào",\n      "exampleEn": "She decided to *embark* on a new career.",\n      "exampleVi": "Cô ấy quyết định *bắt đầu* một sự nghiệp mới.",\n      "explain": "embark on sth: bắt đầu việc gì mới mẻ.",\n      "cefrLevel": "B2"\n    }\n  ]\n}'></textarea>
     <div class="flex justify-end gap-3 mt-6">
       <button id="btn-import-cancel" class="px-4 py-2 rounded-xl text-sm font-semibold bg-secondary hover:bg-secondary/80 transition-colors cursor-pointer">Hủy</button>
       <button id="btn-import-confirm" class="px-4 py-2 rounded-xl text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-md cursor-pointer">Nhập Dữ liệu</button>
@@ -506,64 +795,52 @@
   </dialog>
 
   <!-- Include Flashcard Script -->
-  <script src="./flashcard-updater.js"></script>
+  <script src="./flashcard-maker.js"></script>
   
   <script>
     // Presets Vocabulary Data List
-    let PRESETS = {
-      alive: {
-        word: "alive",
-        ipa: "/əˈlaɪv/",
-        meaning: "còn sống, sống động, hoạt động",
-        image: "https://images.unsplash.com/photo-1585745422697-1b42b98aac14?crop=entropy&cs=tinysrgb&fit=crop&fm=webp&ixid=M3w4MjQ0MDh8MHwxfHNlYXJjaHwxfHxsaXZpbmclMjBwZXJzb258ZW58MHwwfHx8MTc3NzI3OTU2OXww&ixlib=rb-4.1.0&q=80&w=144&h=144",
-        exampleEn: "It is a miracle that he is still alive after the accident.",
-        exampleVi: "Thật kỳ diệu khi anh ấy vẫn còn sống sau vụ tai nạn.",
-        audioWord: "https://dict.youdao.com/dictvoice?audio=alive&type=2",
-        audioExample: "https://dict.youdao.com/dictvoice?audio=It+is+a+miracle+that+he+is+still+alive+after+the+accident.&type=2"
-      },
-      miracle: {
-        word: "miracle",
-        ipa: "/ˈmɪr.ə.kəl/",
-        meaning: "phép màu, điều kỳ diệu, kỳ tích",
-        image: "https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?crop=entropy&cs=tinysrgb&fit=crop&fm=webp&q=80&w=144&h=144",
-        exampleEn: "It is a miracle that he survived the plane crash.",
-        exampleVi: "Thật là một phép màu khi anh ấy sống sót sau vụ tai nạn máy bay.",
-        audioWord: "https://dict.youdao.com/dictvoice?audio=miracle&type=2",
-        audioExample: "https://dict.youdao.com/dictvoice?audio=It+is+a+miracle+that+he+survived+the+plane+crash.&type=2"
-      },
-      antigravity: {
-        word: "antigravity",
-        ipa: "/ˌæn.tiˈɡræv.ə.ti/",
-        meaning: "kháng trọng lực, chống lực hút trái đất",
-        image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?crop=entropy&cs=tinysrgb&fit=crop&fm=webp&q=80&w=144&h=144",
-        exampleEn: "The theoretical spaceship uses antigravity technology.",
-        exampleVi: "Tàu vũ trụ trong lý thuyết sử dụng công nghệ kháng trọng lực.",
-        audioWord: "https://dict.youdao.com/dictvoice?audio=antigravity&type=2",
-        audioExample: "https://dict.youdao.com/dictvoice?audio=The+theoretical+spaceship+uses+antigravity+technology.&type=2"
-      },
-      sparkle: {
-        word: "sparkle",
-        ipa: "/ˈspɑː.kəl/",
-        meaning: "lấp lánh, lóng lánh",
-        image: "https://images.unsplash.com/photo-1490730141103-6cac27aaab94?crop=entropy&cs=tinysrgb&fit=crop&fm=webp&q=80&w=144&h=144",
-        exampleEn: "Her eyes sparkle with excitement whenever she talks about music.",
-        exampleVi: "Đôi mắt cô ấy lấp lánh niềm vui mỗi khi cô ấy nói về âm nhạc.",
-        audioWord: "https://dict.youdao.com/dictvoice?audio=sparkle&type=2",
-        audioExample: "https://dict.youdao.com/dictvoice?audio=Her+eyes+sparkle+with+excitement+whenever+she+talks+about+music.&type=2"
-      }
+    let PRESETS = {};
+
+    // Banner Data (Phương Án B: Tách biệt Opening Text & Subject)
+    const DEFAULT_BANNER = {
+      openingText: "Bẻ khóa từ vựng\ntiếng Anh với",
+      subject: "GREEK\nROOT",
+      colorOpening: "#6b8e23",
+      colorSubject: "#801c65",
+      colorFooter: "#6b8e23",
+      openingFontSize: 0, // 0 = Auto-fit theo độ dài
+      subjectFontSize: 0  // 0 = Auto-fit theo độ dài
     };
+    let BANNER_DATA = { ...DEFAULT_BANNER };
+
+    // Active Mode: 'flashcard' | 'banner'
+    let currentMode = 'flashcard';
+    let currentPresetKey = null;
+    let flashcard = null;
+
+    // DOM Elements - Flashcard
+    let form, formStatus, btnClear, btnCopyJson, btnCopyHtml, btnCopyAllJson, presetContainer;
+    let inputWord, inputType, inputIpa, inputMeaning, inputImage, inputImageFit, inputExampleEn, inputExampleVi, inputExplain, inputCefrLevel;
+    let currentImageFit = 'cover';
+
+    // DOM Elements - Banner
+    let bannerForm, inputBannerOpening, inputBannerSubject;
+    let inputBannerColorOpening, inputBannerColorSubject, inputBannerColorFooter;
+    let labelBannerColorOpening, labelBannerColorSubject, labelBannerColorFooter;
+    let inputBannerSizeOpening, inputBannerSizeSubject;
+    let labelBannerSizeOpening, labelBannerSizeSubject;
+    let btnBannerAutoSize, btnBannerResetColors;
+    let tabModeBanner, tabModeFlashcard, badgeVocabCount, previewPanelTitle;
+    let flashcardContentWrapper, bannerContentWrapper;
 
     const BG_IMAGES = [
+      './background.jpeg',
       './backgrounds/bg1.jpeg',
       './backgrounds/bg2.jpeg',
       './backgrounds/bg3.jpeg',
       './backgrounds/bg4.jpeg'
     ];
 
-    let currentPresetKey = null;
-    let flashcard = null;
-    let form, formStatus, btnClear, btnCopyJson, btnCopyHtml, presetContainer;
-    let inputWord, inputIpa, inputMeaning, inputImage, inputExampleEn, inputExampleVi, inputAudioWord, inputAudioExample;
     let currentBgImage = './background.jpeg';
     let capturedScreenshots = [];
 
@@ -572,42 +849,116 @@
     const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
     const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
 
-    // Initialize Card
+    // Initialize Application
     document.addEventListener('DOMContentLoaded', () => {
-      // Find DOM elements
+      // Find Flashcard DOM elements
       form = document.getElementById('flashcard-form');
       formStatus = document.getElementById('form-status');
       btnClear = document.getElementById('btn-clear');
       btnCopyJson = document.getElementById('btn-copy-json');
       btnCopyHtml = document.getElementById('btn-copy-html');
+      btnCopyAllJson = document.getElementById('btn-copy-all-json');
       presetContainer = document.getElementById('preset-container');
 
       inputWord = document.getElementById('input-word');
+      inputType = document.getElementById('input-type');
       inputIpa = document.getElementById('input-ipa');
       inputMeaning = document.getElementById('input-meaning');
       inputImage = document.getElementById('input-image');
+      inputImageFit = document.getElementById('input-image-fit');
       inputExampleEn = document.getElementById('input-example-en');
       inputExampleVi = document.getElementById('input-example-vi');
-      inputAudioWord = document.getElementById('input-audio-word');
-      inputAudioExample = document.getElementById('input-audio-example');
+      inputExplain = document.getElementById('input-explain');
+      inputCefrLevel = document.getElementById('input-cefr-level');
+
+      // Image Fit buttons logic
+      document.querySelectorAll('.btn-image-fit').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const fit = btn.getAttribute('data-fit');
+          setImageFit(fit, true);
+        });
+      });
+
+      // Find Banner DOM elements
+      bannerForm = document.getElementById('banner-form');
+      inputBannerOpening = document.getElementById('input-banner-opening');
+      inputBannerSubject = document.getElementById('input-banner-subject');
+      inputBannerColorOpening = document.getElementById('input-banner-color-opening');
+      inputBannerColorSubject = document.getElementById('input-banner-color-subject');
+      inputBannerColorFooter = document.getElementById('input-banner-color-footer');
+      labelBannerColorOpening = document.getElementById('label-banner-color-opening');
+      labelBannerColorSubject = document.getElementById('label-banner-color-subject');
+      labelBannerColorFooter = document.getElementById('label-banner-color-footer');
+      btnBannerResetColors = document.getElementById('btn-banner-reset-colors');
+
+      inputBannerSizeOpening = document.getElementById('input-banner-size-opening');
+      inputBannerSizeSubject = document.getElementById('input-banner-size-subject');
+      labelBannerSizeOpening = document.getElementById('label-banner-size-opening');
+      labelBannerSizeSubject = document.getElementById('label-banner-size-subject');
+      btnBannerAutoSize = document.getElementById('btn-banner-auto-size');
+
+      // Mode Switcher DOM elements
+      tabModeBanner = document.getElementById('tab-mode-banner');
+      tabModeFlashcard = document.getElementById('tab-mode-flashcard');
+      badgeVocabCount = document.getElementById('badge-vocab-count');
+      previewPanelTitle = document.getElementById('preview-panel-title');
+
+      flashcardContentWrapper = document.getElementById('flashcard-content-wrapper');
+      bannerContentWrapper = document.getElementById('banner-content-wrapper');
 
       // Create Flashcard Controller Instance targeting the root wrapper
       flashcard = new Flashcard('#wordfight-card-root');
 
-      // Setup Presets
+      // Scale preview to maintain 400x500 layout in wrapper
+      function scaleFlashcardPreview() {
+        const wrapper = document.getElementById('preview-wrapper');
+        const container = document.getElementById('flashcard-container');
+        if (wrapper && container) {
+          const wWidth = wrapper.clientWidth;
+          const wHeight = wrapper.clientHeight;
+          if (wWidth === 0 || wHeight === 0) return;
+          
+          const scale = Math.min(wWidth / 400, wHeight / 500);
+          const scaledWidth = 400 * scale;
+          const scaledHeight = 500 * scale;
+          const offsetX = (wWidth - scaledWidth) / 2;
+          const offsetY = (wHeight - scaledHeight) / 2;
+          
+          container.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+        }
+      }
+      scaleFlashcardPreview();
+      window.addEventListener('resize', scaleFlashcardPreview);
+      if (window.ResizeObserver) {
+        new ResizeObserver(scaleFlashcardPreview).observe(document.getElementById('preview-wrapper'));
+      }
+
+      // Load Presets & Banner from Storage
       loadPresetsFromStorage();
+      loadBannerFromStorage();
+      updateBannerFormFromData();
+      updateBannerPreview();
       renderPresetButtons();
+      updateVocabBadge();
       
-      // Load first preset or 'alive'
+      // Load first preset by default
       const presetKeys = Object.keys(PRESETS);
       if (presetKeys.length > 0) {
-        loadPreset(presetKeys.includes('alive') ? 'alive' : presetKeys[0]);
+        loadPreset(presetKeys[0]);
+      } else {
+        clearForm();
       }
+
+      // Mode switching events
+      tabModeBanner.addEventListener('click', () => switchMode('banner'));
+      tabModeFlashcard.addEventListener('click', () => switchMode('flashcard'));
 
       // Event listeners for Preset Management
       document.getElementById('btn-preset-add').addEventListener('click', saveNewPreset);
       document.getElementById('btn-preset-update').addEventListener('click', updateCurrentPreset);
       document.getElementById('btn-preset-delete').addEventListener('click', deleteCurrentPreset);
+      document.getElementById('btn-preset-delete-all').addEventListener('click', deleteAllPresets);
       document.getElementById('btn-preset-prev').addEventListener('click', prevPreset);
       document.getElementById('btn-preset-next').addEventListener('click', nextPreset);
 
@@ -635,8 +986,216 @@
         }
       });
 
-      // Real-time synchronization
+      // Real-time synchronization - Flashcard form
       form.addEventListener('input', updateCardFromForm);
+
+      // Tự động tải ảnh từ URL, nén và chuyển sang Base64 lưu vào preset
+      let imageUrlDebounceTimer = null;
+      async function checkAndConvertInputImageUrl() {
+        if (!inputImage) return;
+        const val = inputImage.value.trim();
+        if (/^https?:\/\//i.test(val) && !val.startsWith('data:image/')) {
+          clearTimeout(imageUrlDebounceTimer);
+          showPreviewLoading(true, 'Đang tải & tối ưu ảnh sang Base64...');
+          showStatus('Đang chuyển đổi ảnh sang Base64...', 'yellow');
+          try {
+            const base64 = await convertImageUrlToBase64(val);
+            if (base64 && base64.startsWith('data:image/')) {
+              if (inputImage.value.trim() === val) {
+                inputImage.value = base64;
+                updateCardFromForm();
+                showStatus('Đã nén & lưu ảnh Base64 thành công!', 'green');
+              }
+            } else if (base64 && base64 !== val) {
+              if (inputImage.value.trim() === val) {
+                inputImage.value = base64;
+                updateCardFromForm();
+                showStatus('Đã tối ưu link ảnh qua CORS Proxy!', 'green');
+              }
+            }
+          } catch (err) {
+            console.error('Lỗi khi convert ảnh URL:', err);
+            showStatus('Lỗi chuyển ảnh sang Base64, hiển thị qua Proxy.', 'yellow');
+          } finally {
+            showPreviewLoading(false);
+          }
+        }
+      }
+
+      if (inputImage) {
+        inputImage.addEventListener('change', checkAndConvertInputImageUrl);
+        inputImage.addEventListener('paste', () => setTimeout(checkAndConvertInputImageUrl, 60));
+        inputImage.addEventListener('blur', () => {
+          const val = inputImage.value.trim();
+          if (/^https?:\/\//i.test(val) && !val.startsWith('data:image/')) {
+            checkAndConvertInputImageUrl();
+          }
+        });
+        inputImage.addEventListener('input', () => {
+          const val = inputImage.value.trim();
+          if (/^https?:\/\//i.test(val) && !val.startsWith('data:image/')) {
+            clearTimeout(imageUrlDebounceTimer);
+            imageUrlDebounceTimer = setTimeout(checkAndConvertInputImageUrl, 750);
+          }
+        });
+      }
+
+      // Real-time synchronization - Banner form
+      bannerForm.addEventListener('input', updateBannerDataFromForm);
+
+      // Ngăn chặn form submit làm reload app (khi người dùng nhấn Enter trong các ô input)
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        updateCurrentPreset();
+      });
+      bannerForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        updateBannerDataFromForm();
+      });
+
+      form.querySelectorAll('input').forEach(inp => {
+        inp.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            updateCurrentPreset();
+          }
+        });
+      });
+      bannerForm.querySelectorAll('input').forEach(inp => {
+        inp.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            updateBannerDataFromForm();
+          }
+        });
+      });
+
+      // Banner Color pickers
+      inputBannerColorOpening.addEventListener('input', (e) => {
+        BANNER_DATA.colorOpening = e.target.value;
+        labelBannerColorOpening.textContent = e.target.value;
+        updateBannerPreview();
+        saveBannerToStorage();
+      });
+      inputBannerColorSubject.addEventListener('input', (e) => {
+        BANNER_DATA.colorSubject = e.target.value;
+        labelBannerColorSubject.textContent = e.target.value;
+        updateBannerPreview();
+        saveBannerToStorage();
+      });
+      inputBannerColorFooter.addEventListener('input', (e) => {
+        BANNER_DATA.colorFooter = e.target.value;
+        labelBannerColorFooter.textContent = e.target.value;
+        updateBannerPreview();
+        saveBannerToStorage();
+      });
+
+      // Banner Font Size Sliders & Auto-fit
+      if (inputBannerSizeSubject) {
+        inputBannerSizeSubject.addEventListener('input', (e) => {
+          BANNER_DATA.subjectFontSize = parseInt(e.target.value, 10) || 0;
+          updateBannerPreview();
+          saveBannerToStorage();
+        });
+      }
+      if (inputBannerSizeOpening) {
+        inputBannerSizeOpening.addEventListener('input', (e) => {
+          BANNER_DATA.openingFontSize = parseInt(e.target.value, 10) || 0;
+          updateBannerPreview();
+          saveBannerToStorage();
+        });
+      }
+      if (btnBannerAutoSize) {
+        btnBannerAutoSize.addEventListener('click', (e) => {
+          e.preventDefault();
+          BANNER_DATA.subjectFontSize = 0;
+          BANNER_DATA.openingFontSize = 0;
+          if (inputBannerSizeSubject) inputBannerSizeSubject.value = 0;
+          if (inputBannerSizeOpening) inputBannerSizeOpening.value = 0;
+          updateBannerPreview();
+          saveBannerToStorage();
+          showStatus('Đã khôi phục cỡ chữ Tự động (Auto-fit)!', 'green');
+        });
+      }
+
+      // Quick pills for banner opening text
+      document.querySelectorAll('.btn-opening-quick').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const text = btn.getAttribute('data-text');
+          if (text) {
+            inputBannerOpening.value = text;
+            updateBannerDataFromForm();
+          }
+        });
+      });
+
+      // Reset banner colors button
+      if (btnBannerResetColors) {
+        btnBannerResetColors.addEventListener('click', (e) => {
+          e.preventDefault();
+          BANNER_DATA.colorOpening = DEFAULT_BANNER.colorOpening;
+          BANNER_DATA.colorSubject = DEFAULT_BANNER.colorSubject;
+          BANNER_DATA.colorFooter = DEFAULT_BANNER.colorFooter;
+          updateBannerFormFromData();
+          updateBannerPreview();
+          saveBannerToStorage();
+          showStatus('Đã khôi phục màu Banner mặc định!', 'green');
+        });
+      }
+
+      // Paste event listener for images
+      document.addEventListener('paste', (e) => {
+        if (currentMode !== 'flashcard') return;
+        const clipboardItems = e.clipboardData ? e.clipboardData.items : [];
+        let hasImageBlob = false;
+        for (const item of clipboardItems) {
+          if (item.type.indexOf('image') === 0) {
+            hasImageBlob = true;
+            const blob = item.getAsFile();
+            if (blob) {
+              const reader = new FileReader();
+              reader.onload = async (event) => {
+                showPreviewLoading(true, 'Đang tối ưu dung lượng ảnh...');
+                try {
+                  const compressed = await compressImage(event.target.result);
+                  inputImage.value = compressed;
+                  updateCardFromForm();
+                  showStatus('Đã dán và tối ưu ảnh từ Clipboard!', 'green');
+                } catch (err) {
+                  console.error('Lỗi tối ưu ảnh:', err);
+                  inputImage.value = event.target.result;
+                  updateCardFromForm();
+                  showStatus('Đã dán ảnh (chưa tối ưu)!', 'yellow');
+                } finally {
+                  showPreviewLoading(false);
+                }
+              };
+              reader.readAsDataURL(blob);
+              e.preventDefault();
+              break;
+            }
+          }
+        }
+
+        // Nếu không phải dán file ảnh blob, kiểm tra xem clipboard có phải URL ảnh không
+        if (!hasImageBlob && e.clipboardData) {
+          const pastedText = (e.clipboardData.getData('text') || '').trim();
+          if (/^https?:\/\/.+/i.test(pastedText) && 
+              (/\.(jpg|jpeg|png|webp|gif|svg|avif)(\?.*)?$/i.test(pastedText) || 
+               pastedText.includes('pinimg.com') || 
+               pastedText.includes('phototourl.com'))) {
+            const activeId = document.activeElement ? document.activeElement.id : '';
+            const activeTag = document.activeElement ? document.activeElement.tagName : '';
+            if (activeId === 'input-image' || (activeTag !== 'INPUT' && activeTag !== 'TEXTAREA')) {
+              e.preventDefault();
+              inputImage.value = pastedText;
+              updateCardFromForm();
+              checkAndConvertInputImageUrl();
+            }
+          }
+        }
+      });
 
       // Background Presets Click Event
       document.querySelectorAll('.btn-bg-preset').forEach(btn => {
@@ -660,7 +1219,6 @@
       btnCopyJson.addEventListener('click', copyJsonToClipboard);
 
       // Copy all JSON button click
-      const btnCopyAllJson = document.getElementById('btn-copy-all-json');
       if (btnCopyAllJson) {
         btnCopyAllJson.addEventListener('click', copyAllJsonToClipboard);
       }
@@ -687,7 +1245,7 @@
       // Clear Form button click
       btnClear.addEventListener('click', clearForm);
 
-      // Import JSON Modal logic
+      // Import JSON Modal logic (Phương Án B: Hỗ trợ cả gói trọn bộ và mảng)
       const importModal = document.getElementById('import-json-modal');
       const btnOpenImport = document.getElementById('btn-open-import');
       const btnImportCancel = document.getElementById('btn-import-cancel');
@@ -709,55 +1267,500 @@
           alert("Vui lòng nhập dữ liệu JSON.");
           return;
         }
+        let parsed;
         try {
-          const parsed = JSON.parse(val);
-          let count = 0;
-          
-          if (Array.isArray(parsed)) {
-            parsed.forEach(item => {
-              if (item && item.word) {
-                const key = item.word.toLowerCase().replace(/\s+/g, '-');
-                PRESETS[key] = { ...PRESETS[key], ...item };
-                count++;
-              }
-            });
-          } else if (typeof parsed === 'object' && parsed !== null) {
-            Object.keys(parsed).forEach(key => {
-              if (parsed[key] && parsed[key].word) {
-                const safeKey = parsed[key].word.toLowerCase().replace(/\s+/g, '-');
-                PRESETS[safeKey] = { ...PRESETS[safeKey], ...parsed[key] };
-                count++;
-              }
-            });
-          }
-          
-          if (count > 0) {
-            savePresetsToStorage();
-            renderPresetButtons();
-            alert(`Đã nhập thành công ${count} từ vựng mới!`);
-            importModal.close();
-          } else {
-            alert("Không tìm thấy từ vựng nào hợp lệ trong JSON. Hãy đảm bảo mỗi mục có trường 'word'.");
-          }
+          parsed = JSON.parse(val);
         } catch(e) {
           alert("Lỗi phân tích JSON. Vui lòng kiểm tra lại định dạng.");
+          console.error(e);
+          return;
+        }
+
+        try {
+          let vocabCount = 0;
+          let hasBanner = false;
+
+          // Trường hợp 1: Phương Án B tiêu chuẩn: { banner: {...}, vocabularies: [...] }
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && (parsed.banner || parsed.vocabularies)) {
+            if (parsed.banner) {
+              BANNER_DATA = {
+                ...BANNER_DATA,
+                openingText: parsed.banner.openingText || BANNER_DATA.openingText,
+                subject: parsed.banner.subject || BANNER_DATA.subject,
+                colorOpening: parsed.banner.colorOpening || BANNER_DATA.colorOpening,
+                colorSubject: parsed.banner.colorSubject || BANNER_DATA.colorSubject,
+                colorFooter: parsed.banner.colorFooter || BANNER_DATA.colorFooter,
+                openingFontSize: parsed.banner.openingFontSize !== undefined ? Number(parsed.banner.openingFontSize) : (BANNER_DATA.openingFontSize || 0),
+                subjectFontSize: parsed.banner.subjectFontSize !== undefined ? Number(parsed.banner.subjectFontSize) : (BANNER_DATA.subjectFontSize || 0)
+              };
+              saveBannerToStorage();
+              updateBannerFormFromData();
+              updateBannerPreview();
+              hasBanner = true;
+            }
+            if (Array.isArray(parsed.vocabularies)) {
+              parsed.vocabularies.forEach(item => {
+                if (item && item.word) {
+                  const key = item.word.toLowerCase().replace(/\s+/g, '-');
+                  PRESETS[key] = { ...PRESETS[key], ...item };
+                  vocabCount++;
+                }
+              });
+            }
+          }
+          // Trường hợp 2: Dạng mảng Array
+          else if (Array.isArray(parsed)) {
+            parsed.forEach(item => {
+              if (!item) return;
+              if (item.isBanner || item.type === 'banner' || (item.subject && !item.word)) {
+                BANNER_DATA = {
+                  ...BANNER_DATA,
+                  openingText: item.openingText || BANNER_DATA.openingText,
+                  subject: item.subject || BANNER_DATA.subject,
+                  colorOpening: item.colorOpening || BANNER_DATA.colorOpening,
+                  colorSubject: item.colorSubject || BANNER_DATA.colorSubject,
+                  colorFooter: item.colorFooter || BANNER_DATA.colorFooter,
+                  openingFontSize: item.openingFontSize !== undefined ? Number(item.openingFontSize) : (BANNER_DATA.openingFontSize || 0),
+                  subjectFontSize: item.subjectFontSize !== undefined ? Number(item.subjectFontSize) : (BANNER_DATA.subjectFontSize || 0)
+                };
+                saveBannerToStorage();
+                updateBannerFormFromData();
+                updateBannerPreview();
+                hasBanner = true;
+              } else if (item.word) {
+                const key = item.word.toLowerCase().replace(/\s+/g, '-');
+                PRESETS[key] = { ...PRESETS[key], ...item };
+                vocabCount++;
+              }
+            });
+          }
+          // Trường hợp 3: Dạng Object với các key là từ vựng hoặc banner
+          else if (typeof parsed === 'object' && parsed !== null) {
+            Object.keys(parsed).forEach(key => {
+              if (key === 'banner') {
+                BANNER_DATA = { ...BANNER_DATA, ...parsed[key] };
+                saveBannerToStorage();
+                updateBannerFormFromData();
+                updateBannerPreview();
+                hasBanner = true;
+              } else if (parsed[key] && parsed[key].word) {
+                const safeKey = parsed[key].word.toLowerCase().replace(/\s+/g, '-');
+                PRESETS[safeKey] = { ...PRESETS[safeKey], ...parsed[key] };
+                vocabCount++;
+              }
+            });
+          }
+
+          if (vocabCount > 0 || hasBanner) {
+            savePresetsToStorage();
+            renderPresetButtons();
+            updateVocabBadge();
+
+            let msg = "Nhập dữ liệu thành công!";
+            if (hasBanner && vocabCount > 0) {
+              msg = `Đã nhập thành công Banner (${BANNER_DATA.subject}) và ${vocabCount} từ vựng!`;
+            } else if (hasBanner) {
+              msg = `Đã cập nhật Banner bìa (${BANNER_DATA.subject}) thành công!`;
+            } else {
+              msg = `Đã nhập thành công ${vocabCount} từ vựng!`;
+            }
+            alert(msg);
+            importModal.close();
+          } else {
+            alert("Không tìm thấy dữ liệu hợp lệ trong JSON. Hãy đảm bảo có trường 'word' hoặc đối tượng 'banner'.");
+          }
+        } catch (e) {
+          alert("Đã xảy ra lỗi trong quá trình nhập dữ liệu.");
           console.error(e);
         }
       });
     });
 
+    // --- Mode Switcher (Banner vs Flashcard) ---
+    function switchMode(mode, saveActive = true) {
+      currentMode = mode;
+      const btnScreenshot = document.getElementById('btn-screenshot');
+
+      if (mode === 'banner') {
+        // Tab styling
+        tabModeBanner.className = 'flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30 shadow-sm';
+        tabModeFlashcard.className = 'flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer text-muted-foreground hover:text-foreground';
+
+        // Panels
+        bannerForm.classList.remove('hidden');
+        form.classList.add('hidden');
+        bannerContentWrapper.classList.remove('hidden');
+        flashcardContentWrapper.classList.add('hidden');
+
+        // Titles & Status
+        previewPanelTitle.textContent = 'Xem trước Thẻ Banner Bìa (Cover)';
+        formStatus.textContent = 'Chế độ: Banner Bìa';
+        formStatus.className = 'text-xs font-semibold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20';
+
+        if (btnScreenshot) {
+          btnScreenshot.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg> Chụp ảnh Banner`;
+        }
+        btnCopyHtml.textContent = 'Copy HTML Banner';
+
+        updateBannerFormFromData();
+        updateBannerPreview();
+      } else {
+        // Tab styling
+        tabModeBanner.className = 'flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer text-muted-foreground hover:text-foreground';
+        tabModeFlashcard.className = 'flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer bg-primary/20 text-primary-foreground border border-primary/30 shadow-sm';
+
+        // Panels
+        bannerForm.classList.add('hidden');
+        form.classList.remove('hidden');
+        bannerContentWrapper.classList.add('hidden');
+        flashcardContentWrapper.classList.remove('hidden');
+
+        // Titles & Status
+        previewPanelTitle.textContent = 'Xem trước Thẻ Flashcard';
+        formStatus.textContent = 'Chế độ: Thẻ Từ Vựng';
+        formStatus.className = 'text-xs font-semibold px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20';
+
+        if (btnScreenshot) {
+          btnScreenshot.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg> Chụp ảnh thẻ`;
+        }
+        btnCopyHtml.textContent = 'Copy HTML Thẻ';
+      }
+
+      renderPresetButtons();
+    }
+
+    // --- Banner State & Synchronization ---
+    function loadBannerFromStorage() {
+      const saved = localStorage.getItem('wordfight-banner');
+      if (saved) {
+        try {
+          BANNER_DATA = { ...DEFAULT_BANNER, ...JSON.parse(saved) };
+        } catch(e) {
+          console.error("Failed to load banner from storage", e);
+        }
+      }
+    }
+
+    function saveBannerToStorage() {
+      try {
+        localStorage.setItem('wordfight-banner', JSON.stringify(BANNER_DATA));
+      } catch (e) {
+        console.warn("Could not save banner to localStorage", e);
+      }
+    }
+
+    function updateBannerFormFromData() {
+      if (!inputBannerOpening) return;
+      inputBannerOpening.value = BANNER_DATA.openingText || '';
+      inputBannerSubject.value = BANNER_DATA.subject || '';
+
+      inputBannerColorOpening.value = BANNER_DATA.colorOpening || DEFAULT_BANNER.colorOpening;
+      labelBannerColorOpening.textContent = BANNER_DATA.colorOpening || DEFAULT_BANNER.colorOpening;
+
+      inputBannerColorSubject.value = BANNER_DATA.colorSubject || DEFAULT_BANNER.colorSubject;
+      labelBannerColorSubject.textContent = BANNER_DATA.colorSubject || DEFAULT_BANNER.colorSubject;
+
+      inputBannerColorFooter.value = BANNER_DATA.colorFooter || DEFAULT_BANNER.colorFooter;
+      labelBannerColorFooter.textContent = BANNER_DATA.colorFooter || DEFAULT_BANNER.colorFooter;
+
+      if (inputBannerSizeSubject) {
+        inputBannerSizeSubject.value = BANNER_DATA.subjectFontSize || 0;
+      }
+      if (inputBannerSizeOpening) {
+        inputBannerSizeOpening.value = BANNER_DATA.openingFontSize || 0;
+      }
+    }
+
+    function updateBannerDataFromForm() {
+      BANNER_DATA.openingText = inputBannerOpening.value;
+      BANNER_DATA.subject = inputBannerSubject.value;
+      updateBannerPreview();
+      saveBannerToStorage();
+      
+      // Update banner button label in preset container
+      const bannerBtn = presetContainer.querySelector('.btn-banner-preset');
+      if (bannerBtn) {
+        const cleanSubject = (BANNER_DATA.subject || 'Cover').replace(/\n/g, ' ');
+        bannerBtn.innerHTML = `⭐ Banner: <span class="font-extrabold uppercase">${cleanSubject}</span>`;
+      }
+    }
+
+    // Thuật toán Auto-fit Dynamic Font Scaling cho Subject Banner
+    function calculateAutoSubjectFontSize(text) {
+      if (!text) return 50;
+      const clean = text.trim();
+      const lines = clean.split('\n').filter(l => l.trim().length > 0);
+      const lineCount = lines.length || 1;
+      const maxLineLen = Math.max(...lines.map(l => l.trim().length), 0);
+
+      // Trường hợp 1 dòng duy nhất (Ví dụ: "BÁ KHÍ", "ROOT", "IELTS", "COLLOCATIONS")
+      if (lineCount === 1) {
+        if (maxLineLen <= 5) return 66; // Cực ngắn (4-5 ký tự) -> 66px
+        if (maxLineLen <= 7) return 62; // "BÁ KHÍ" (6 ký tự) -> 62px đầy đặn, uy lực
+        if (maxLineLen <= 9) return 52; // 8-9 ký tự -> 52px
+        if (maxLineLen <= 12) return 42; // 10-12 ký tự -> 42px
+        if (maxLineLen <= 15) return 36; // 13-15 ký tự -> 36px
+        return 30;                      // > 15 ký tự -> 30px
+      }
+
+      // Trường hợp 2 dòng (Ví dụ: "GREEK\nROOT", "BUSINESS\nENGLISH")
+      if (lineCount === 2) {
+        if (maxLineLen <= 6) return 52; // Mỗi dòng 4-6 ký tự -> 52px
+        if (maxLineLen <= 9) return 46; // Mỗi dòng 7-9 ký tự -> 46px
+        if (maxLineLen <= 12) return 38; // 10-12 ký tự -> 38px
+        return 32;
+      }
+
+      // Trường hợp 3 dòng trở lên
+      if (maxLineLen <= 8) return 34;
+      return 28;
+    }
+
+    // Thuật toán Auto-fit cho Opening Text
+    function calculateAutoOpeningFontSize(text) {
+      if (!text) return 23;
+      const len = text.trim().length;
+      if (len <= 20) return 25;
+      if (len <= 40) return 23;
+      if (len <= 60) return 21;
+      return 19;
+    }
+
+    function updateBannerPreview() {
+      const openingEl = document.getElementById('banner-preview-opening');
+      const subjectEl = document.getElementById('banner-preview-subject');
+      const footerEl = document.getElementById('banner-preview-footer');
+
+      // 1. Cập nhật Opening Text (Mở đầu)
+      if (openingEl) {
+        const text = BANNER_DATA.openingText || DEFAULT_BANNER.openingText;
+        openingEl.innerHTML = text.replace(/\n/g, '<br>');
+        openingEl.style.color = BANNER_DATA.colorOpening || DEFAULT_BANNER.colorOpening;
+
+        const autoOpening = calculateAutoOpeningFontSize(text);
+        const openingSize = (BANNER_DATA.openingFontSize && BANNER_DATA.openingFontSize > 0)
+          ? BANNER_DATA.openingFontSize
+          : autoOpening;
+
+        openingEl.style.fontSize = `${openingSize}px`;
+        openingEl.style.lineHeight = '1.32';
+
+        if (labelBannerSizeOpening) {
+          labelBannerSizeOpening.textContent = (BANNER_DATA.openingFontSize && BANNER_DATA.openingFontSize > 0)
+            ? `${BANNER_DATA.openingFontSize}px (Thủ công)`
+            : `Tự động (~${autoOpening}px)`;
+        }
+      }
+
+      // 2. Cập nhật Subject Text (Chủ đề từ vựng) với Auto-fit & Pixel Safety Clamp
+      if (subjectEl) {
+        const text = BANNER_DATA.subject || DEFAULT_BANNER.subject;
+        subjectEl.innerHTML = text.replace(/\n/g, '<br>');
+        subjectEl.style.color = BANNER_DATA.colorSubject || DEFAULT_BANNER.colorSubject;
+
+        const autoSubject = calculateAutoSubjectFontSize(text);
+        let subjectSize = (BANNER_DATA.subjectFontSize && BANNER_DATA.subjectFontSize > 0)
+          ? BANNER_DATA.subjectFontSize
+          : autoSubject;
+
+        subjectEl.style.fontSize = `${subjectSize}px`;
+        subjectEl.style.lineHeight = subjectSize > 50 ? '1.02' : '1.08';
+
+        // Pixel-perfect Safety Guard: Khung trắng rộng 320px, padding 20px mỗi bên => bề rộng tối đa an toàn là 276px
+        // Nếu ở chế độ Tự động (Auto-fit), tự động kiểm tra DOM scrollWidth và giảm dần nếu bị tràn
+        if (!BANNER_DATA.subjectFontSize || BANNER_DATA.subjectFontSize === 0) {
+          while (subjectEl.scrollWidth > 276 && subjectSize > 22) {
+            subjectSize -= 1;
+            subjectEl.style.fontSize = `${subjectSize}px`;
+          }
+        }
+
+        if (labelBannerSizeSubject) {
+          labelBannerSizeSubject.textContent = (BANNER_DATA.subjectFontSize && BANNER_DATA.subjectFontSize > 0)
+            ? `${BANNER_DATA.subjectFontSize}px (Thủ công)`
+            : `Tự động (~${subjectSize}px)`;
+        }
+      }
+
+      // 3. Cập nhật màu Khối mũi tên bên dưới
+      if (footerEl) {
+        footerEl.style.backgroundColor = BANNER_DATA.colorFooter || DEFAULT_BANNER.colorFooter;
+      }
+    }
+
+    function updateVocabBadge() {
+      if (badgeVocabCount) {
+        badgeVocabCount.textContent = Object.keys(PRESETS).length;
+      }
+    }
+
+    // Set and synchronize Image Fit mode
+    function setImageFit(fit, triggerUpdate = false) {
+      currentImageFit = fit || 'cover';
+      if (inputImageFit) inputImageFit.value = currentImageFit;
+
+      document.querySelectorAll('.btn-image-fit').forEach(btn => {
+        const btnFit = btn.getAttribute('data-fit');
+        if (btnFit === currentImageFit) {
+          btn.className = 'btn-image-fit px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer bg-primary text-primary-foreground shadow-sm';
+        } else {
+          btn.className = 'btn-image-fit px-2.5 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer bg-secondary/60 text-muted-foreground hover:text-foreground hover:bg-secondary';
+        }
+      });
+
+      if (triggerUpdate) {
+        updateCardFromForm();
+        showStatus(`Đã đổi kiểu ảnh: ${currentImageFit.toUpperCase()}`, 'green');
+      }
+    }
+
     // Extract data object from form fields
     function getFormData() {
       return {
         word: inputWord.value.trim(),
+        wordType: inputType.value.trim(),
         ipa: inputIpa.value.trim(),
         meaning: inputMeaning.value.trim(),
         image: inputImage.value.trim(),
+        imageFit: currentImageFit || 'cover',
         exampleEn: inputExampleEn.value.trim(),
         exampleVi: inputExampleVi.value.trim(),
-        audioWord: inputAudioWord.value.trim(),
-        audioExample: inputAudioExample.value.trim()
+        explain: inputExplain ? inputExplain.value.trim() : '',
+        cefrLevel: inputCefrLevel.value.trim()
       };
+    }
+
+    // Image Compression Utility
+    function compressImage(dataUrl, maxWidth = 600, maxHeight = 600, quality = 0.8) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > maxWidth || height > maxHeight) {
+            const ratio = Math.min(maxWidth / width, maxHeight / height);
+            width = Math.round(width * ratio);
+            height = Math.round(height * ratio);
+          }
+          
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          const compressed = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressed);
+        };
+        img.onerror = (err) => reject(err);
+        img.src = dataUrl;
+      });
+    }
+
+    // Convert external Image URL to compressed Base64 Data URL (bypassing CORS)
+    async function convertImageUrlToBase64(url, maxWidth = 600, maxHeight = 600, quality = 0.8) {
+      if (!url || typeof url !== 'string') return '';
+      url = url.trim();
+      if (url.startsWith('data:image/')) return url;
+      if (!/^https?:\/\//i.test(url)) return url;
+
+      const proxyUrl = `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=${maxWidth}&h=${maxHeight}&fit=inside&output=jpg&q=${Math.round(quality * 100)}`;
+
+      // Helper chuyển Blob thành Base64 Data URL
+      const blobToDataUrl = (blob) => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      };
+
+      // Helper vẽ lên canvas dự phòng
+      const loadViaImageTag = (src) => {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            try {
+              let width = img.naturalWidth || img.width;
+              let height = img.naturalHeight || img.height;
+              if (width > maxWidth || height > maxHeight) {
+                const ratio = Math.min(maxWidth / width, maxHeight / height);
+                width = Math.round(width * ratio);
+                height = Math.round(height * ratio);
+              }
+              const canvas = document.createElement('canvas');
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, width, height);
+              resolve(canvas.toDataURL('image/jpeg', quality));
+            } catch (err) {
+              reject(err);
+            }
+          };
+          img.onerror = (err) => reject(err);
+          img.src = src;
+        });
+      };
+
+      // 1. Thử tải qua CORS Proxy (images.weserv.nl)
+      try {
+        const res = await fetch(proxyUrl);
+        if (res.ok) {
+          const blob = await res.blob();
+          const base64 = await blobToDataUrl(blob);
+          if (base64 && base64.startsWith('data:image/')) {
+            return base64;
+          }
+        }
+      } catch (proxyErr) {
+        console.warn('Lỗi fetch qua proxy:', proxyErr);
+      }
+
+      // 2. Thử vẽ canvas qua proxyUrl
+      try {
+        const base64 = await loadViaImageTag(proxyUrl);
+        if (base64 && base64.startsWith('data:image/')) {
+          return base64;
+        }
+      } catch (canvasErr) {
+        console.warn('Lỗi canvas qua proxy:', canvasErr);
+      }
+
+      // 3. Thử direct fetch (dành cho Electron có webSecurity: false hoặc domain mở CORS)
+      try {
+        const res = await fetch(url, { mode: 'cors' });
+        if (res.ok) {
+          const blob = await res.blob();
+          const dataUrl = await blobToDataUrl(blob);
+          return await compressImage(dataUrl, maxWidth, maxHeight, quality);
+        }
+      } catch (directErr) {
+        console.warn('Direct fetch failed:', directErr);
+      }
+
+      // 4. Nếu không thể tạo Base64, trả về proxyUrl để thẻ img vẫn hiển thị được với CORS
+      return proxyUrl;
+    }
+
+    // Helper to toggle preview loading overlay
+    function showPreviewLoading(show, text = 'Đang xử lý...') {
+      const overlay = document.getElementById('preview-loading-overlay');
+      const textEl = document.getElementById('preview-loading-text');
+      if (overlay) {
+        if (show) {
+          if (textEl) textEl.textContent = text;
+          overlay.classList.remove('pointer-events-none', 'opacity-0');
+          overlay.classList.add('opacity-100');
+        } else {
+          overlay.classList.remove('opacity-100');
+          overlay.classList.add('opacity-0', 'pointer-events-none');
+        }
+      }
     }
 
     // Preset Management Functions
@@ -765,69 +1768,161 @@
       const saved = localStorage.getItem('wordfight-presets');
       if (saved) {
         try {
-          const parsed = JSON.parse(saved);
-          PRESETS = { ...PRESETS, ...parsed };
+          PRESETS = JSON.parse(saved);
+          Object.keys(PRESETS).forEach(k => {
+            if (!PRESETS[k].explain && (PRESETS[k].patternEn || PRESETS[k].patternVi)) {
+              const parts = [];
+              if (PRESETS[k].patternEn) parts.push(PRESETS[k].patternEn);
+              if (PRESETS[k].patternVi) parts.push(`→ ${PRESETS[k].patternVi.replace(/^[->→\s]+/, '')}`);
+              PRESETS[k].explain = parts.join('\n');
+              delete PRESETS[k].patternEn;
+              delete PRESETS[k].patternVi;
+            }
+          });
         } catch(e) {
           console.error("Failed to load presets", e);
         }
       }
+      if (!PRESETS || typeof PRESETS !== 'object' || Object.keys(PRESETS).length === 0) {
+        PRESETS = {
+          "alive": {
+            word: "alive",
+            wordType: "adj",
+            ipa: "/əˈlaɪv/",
+            meaning: "còn sống, sống động, hoạt động",
+            image: "",
+            imageFit: "cover",
+            exampleEn: "It is a miracle that he is still *alive* after the accident.",
+            exampleVi: "Thật kỳ diệu khi anh ấy vẫn *còn sống* sau vụ tai nạn.",
+            explain: "The young entrepreneur decided to *embark* on an exciting business venture.\n→ Nhà doanh nghiệp trẻ quyết định *bắt đầu* một dự án kinh doanh thú vị.",
+            cefrLevel: "B2"
+          }
+        };
+      }
     }
 
-    // Save presets to localStorage
     function savePresetsToStorage() {
-      localStorage.setItem('wordfight-presets', JSON.stringify(PRESETS));
+      try {
+        localStorage.setItem('wordfight-presets', JSON.stringify(PRESETS));
+        updateVocabBadge();
+      } catch (e) {
+        console.warn("Could not save to localStorage. Quota might be exceeded.", e);
+        showStatus('Lỗi: Bộ nhớ đầy, chỉ lưu tạm thời!', 'red');
+      }
     }
 
     function renderPresetButtons() {
       presetContainer.innerHTML = '';
+
+      // 1. Nút Banner Bìa (Được ghim đầu danh sách)
+      const bannerBtn = document.createElement('button');
+      const isBannerActive = (currentMode === 'banner');
+      bannerBtn.className = isBannerActive
+        ? 'btn-banner-preset px-3.5 py-1.5 text-xs font-bold rounded-full bg-purple-500/25 border-2 border-purple-500 text-purple-700 dark:text-purple-300 cursor-pointer transition-all shadow-sm'
+        : 'btn-banner-preset px-3.5 py-1.5 text-xs font-semibold rounded-full bg-purple-500/10 border border-purple-500/30 hover:border-purple-500/60 text-purple-600 dark:text-purple-400 cursor-pointer transition-all';
+      const cleanSubject = (BANNER_DATA.subject || 'Cover').replace(/\n/g, ' ');
+      bannerBtn.innerHTML = `⭐ Banner: <span class="font-extrabold uppercase">${cleanSubject}</span>`;
+      bannerBtn.title = 'Xem & chỉnh sửa Banner bìa';
+      bannerBtn.addEventListener('click', () => switchMode('banner'));
+      presetContainer.appendChild(bannerBtn);
+
+      // 2. Các nút từ vựng
       Object.keys(PRESETS).forEach((key) => {
         const btn = document.createElement('button');
-        btn.className = 'px-4 py-1.5 text-xs font-bold rounded-full bg-secondary border border-border hover:border-primary/50 text-foreground cursor-pointer transition-colors';
-        if (key === currentPresetKey) {
-          btn.className = 'px-4 py-1.5 text-xs font-bold rounded-full bg-primary/20 border border-primary text-primary-foreground cursor-pointer transition-colors';
-        }
+        const isActive = (currentMode === 'flashcard' && key === currentPresetKey);
+        btn.className = isActive
+          ? 'px-4 py-1.5 text-xs font-bold rounded-full bg-primary/20 border border-primary text-primary-foreground cursor-pointer transition-colors shadow-sm'
+          : 'px-4 py-1.5 text-xs font-semibold rounded-full bg-secondary border border-border hover:border-primary/50 text-foreground cursor-pointer transition-colors';
+        
         btn.textContent = PRESETS[key].word || key;
         btn.addEventListener('click', () => {
+          if (currentMode !== 'flashcard') {
+            switchMode('flashcard');
+          }
           loadPreset(key);
         });
         presetContainer.appendChild(btn);
       });
+
+      updateVocabBadge();
     }
 
     function saveNewPreset() {
+      if (currentMode === 'banner') {
+        saveBannerToStorage();
+        showStatus('Đã lưu Banner bìa!', 'green');
+        return;
+      }
+
       const data = getFormData();
       if (!data.word) {
         alert("Vui lòng nhập Từ vựng (Word) trước khi lưu.");
+        inputWord.focus();
         return;
       }
-      const key = data.word.toLowerCase().replace(/\s+/g, '-');
+      const key = data.word.toLowerCase().trim().replace(/\s+/g, '-');
       PRESETS[key] = data;
       savePresetsToStorage();
       currentPresetKey = key;
       renderPresetButtons();
+      showStatus(`Đã thêm từ mới '${data.word}'!`, 'green');
     }
 
     function updateCurrentPreset() {
-      if (!currentPresetKey) {
-        alert("Bạn chưa chọn từ vựng mẫu nào để cập nhật. Hãy dùng nút 'Lưu thành từ mới'.");
+      if (currentMode === 'banner') {
+        updateBannerDataFromForm();
+        showStatus('Đã cập nhật Banner bìa!', 'green');
         return;
       }
+
       const data = getFormData();
       if (!data.word) {
         alert("Vui lòng nhập Từ vựng (Word).");
+        inputWord.focus();
         return;
       }
-      PRESETS[currentPresetKey] = data;
+
+      const newKey = data.word.toLowerCase().trim().replace(/\s+/g, '-');
+
+      if (!currentPresetKey) {
+        // Nếu người dùng đang chỉnh sửa form trắng, tự động lưu thành từ mới
+        PRESETS[newKey] = data;
+        currentPresetKey = newKey;
+        savePresetsToStorage();
+        renderPresetButtons();
+        showStatus(`Đã lưu từ '${data.word}'!`, 'green');
+        return;
+      }
+
+      // Nếu từ vựng bị đổi tên -> Cập nhật key trong PRESETS
+      if (currentPresetKey !== newKey) {
+        delete PRESETS[currentPresetKey];
+      }
+      PRESETS[newKey] = data;
+      currentPresetKey = newKey;
       savePresetsToStorage();
       renderPresetButtons();
+      showStatus(`Đã cập nhật từ '${data.word}'!`, 'green');
     }
 
     function deleteCurrentPreset() {
+      if (currentMode === 'banner') {
+        if (confirm("Bạn có muốn đặt lại Banner bìa về mặc định không?")) {
+          BANNER_DATA = { ...DEFAULT_BANNER };
+          saveBannerToStorage();
+          updateBannerFormFromData();
+          updateBannerPreview();
+          renderPresetButtons();
+          showStatus('Đã đặt lại Banner mặc định!', 'green');
+        }
+        return;
+      }
+
       if (!currentPresetKey) {
         alert("Bạn chưa chọn từ vựng nào để xóa.");
         return;
       }
-      if (confirm(`Bạn có chắc muốn xóa từ '${PRESETS[currentPresetKey].word}'?`)) {
+      if (confirm(`Bạn có chắc muốn xóa từ '${PRESETS[currentPresetKey].word || currentPresetKey}'?`)) {
         delete PRESETS[currentPresetKey];
         savePresetsToStorage();
         const remainingKeys = Object.keys(PRESETS);
@@ -841,39 +1936,78 @@
       }
     }
 
+    function deleteAllPresets() {
+      const keys = Object.keys(PRESETS);
+      if (keys.length === 0) {
+        alert("Danh sách từ vựng hiện đã trống.");
+        return;
+      }
+      if (confirm("Bạn có chắc chắn muốn XÓA TOÀN BỘ danh sách từ vựng không? Hành động này không thể hoàn tác.")) {
+        PRESETS = {};
+        savePresetsToStorage();
+        currentPresetKey = null;
+        clearForm();
+        renderPresetButtons();
+        showStatus('Đã xóa toàn bộ từ vựng!', 'red');
+      }
+    }
+
     function nextPreset() {
+      if (currentMode === 'banner') {
+        const keys = Object.keys(PRESETS);
+        if (keys.length > 0) {
+          switchMode('flashcard');
+          loadPreset(keys[0]);
+        }
+        return;
+      }
       const keys = Object.keys(PRESETS);
       if (keys.length === 0) return;
       let idx = keys.indexOf(currentPresetKey);
-      idx = (idx + 1) % keys.length;
+      if (idx === -1) {
+        idx = 0;
+      } else {
+        idx = (idx + 1) % keys.length;
+      }
       loadPreset(keys[idx]);
     }
 
     function prevPreset() {
+      if (currentMode === 'banner') {
+        const keys = Object.keys(PRESETS);
+        if (keys.length > 0) {
+          switchMode('flashcard');
+          loadPreset(keys[keys.length - 1]);
+        }
+        return;
+      }
       const keys = Object.keys(PRESETS);
       if (keys.length === 0) return;
       let idx = keys.indexOf(currentPresetKey);
-      idx = (idx - 1 + keys.length) % keys.length;
+      if (idx === -1) {
+        idx = keys.length - 1;
+      } else {
+        idx = (idx - 1 + keys.length) % keys.length;
+      }
       loadPreset(keys[idx]);
     }
 
     // Load preset into form inputs & card
-    // Note: Background image is kept as current visual selection and NOT updated by presets
     function loadPreset(key) {
       const data = PRESETS[key];
       if (!data) return;
       currentPresetKey = key;
 
       inputWord.value = data.word || '';
+      inputType.value = data.wordType || '';
       inputIpa.value = data.ipa || '';
       inputMeaning.value = data.meaning || '';
       inputImage.value = data.image || '';
+      setImageFit(data.imageFit || 'cover', false);
       inputExampleEn.value = data.exampleEn || '';
       inputExampleVi.value = data.exampleVi || '';
-      inputAudioWord = document.getElementById('input-audio-word');
-      inputAudioWord.value = data.audioWord || '';
-      inputAudioExample = document.getElementById('input-audio-example');
-      inputAudioExample.value = data.audioExample || '';
+      inputExplain.value = data.explain || '';
+      inputCefrLevel.value = data.cefrLevel || '';
 
       flashcard.update(data);
       renderPresetButtons();
@@ -884,12 +2018,10 @@
       const data = getFormData();
       flashcard.update(data);
       
-      // Tự động lưu (auto-save) nếu đang mở một preset
-      if (currentPresetKey) {
+      if (currentPresetKey && PRESETS[currentPresetKey]) {
         PRESETS[currentPresetKey] = data;
         savePresetsToStorage();
         
-        // Cập nhật text của nút preset hiện tại
         const activeBtn = Array.from(presetContainer.children).find(btn => btn.classList.contains('bg-primary/20'));
         if (activeBtn) {
           activeBtn.textContent = data.word || currentPresetKey;
@@ -900,18 +2032,28 @@
     // Clear form inputs and flashcard
     function clearForm(e) {
       if (e) e.preventDefault();
+      if (currentMode === 'banner') {
+        inputBannerOpening.value = '';
+        inputBannerSubject.value = '';
+        updateBannerDataFromForm();
+        showStatus('Đã xóa Form Banner!', 'green');
+        return;
+      }
       currentPresetKey = null;
       renderPresetButtons();
       form.reset();
+      setImageFit('cover', false);
       flashcard.update({
         word: '',
+        wordType: '',
         ipa: '',
         meaning: '',
         image: '',
+        imageFit: 'cover',
         exampleEn: '',
         exampleVi: '',
-        audioWord: '',
-        audioExample: ''
+        explain: '',
+        cefrLevel: ''
       });
     }
 
@@ -929,13 +2071,22 @@
       changeBackground(bgUrl);
     }
 
-    // Export current fields as JSON string to clipboard
+    // Export current active item as JSON string
     function copyJsonToClipboard(e) {
       if (e) e.preventDefault();
       
+      if (currentMode === 'banner') {
+        const jsonString = JSON.stringify({ banner: BANNER_DATA }, null, 2);
+        navigator.clipboard.writeText(jsonString).then(() => {
+          showStatus('Đã sao chép JSON Banner!', 'green');
+        }).catch(err => {
+          console.error(err);
+          alert('Có lỗi xảy ra khi sao chép JSON.');
+        });
+        return;
+      }
+
       const data = getFormData();
-      
-      // Validate word field is filled
       if (!data.word) {
         showStatus('Lỗi: Hãy nhập Từ Vựng!', 'red');
         inputWord.focus();
@@ -943,33 +2094,29 @@
       }
 
       const jsonString = JSON.stringify(data, null, 2);
-      
       navigator.clipboard.writeText(jsonString).then(() => {
-        showStatus('Đã sao chép JSON!', 'green');
+        showStatus('Đã sao chép JSON Từ!', 'green');
       }).catch(err => {
-        console.error('Không thể sao chép vào clipboard: ', err);
+        console.error(err);
         alert('Có lỗi xảy ra khi sao chép JSON.');
       });
     }
 
-    // Export all presets as JSON array to clipboard
+    // Export full package (Phương Án B: Banner + Vocabularies) to clipboard
     function copyAllJsonToClipboard(e) {
       if (e) e.preventDefault();
       
-      const keys = Object.keys(PRESETS);
-      if (keys.length === 0) {
-        showStatus('Lỗi: Danh sách trống!', 'red');
-        return;
-      }
+      const packageData = {
+        banner: BANNER_DATA,
+        vocabularies: Object.values(PRESETS)
+      };
 
-      const presetsArray = Object.values(PRESETS);
-      const jsonString = JSON.stringify(presetsArray, null, 2);
-      
+      const jsonString = JSON.stringify(packageData, null, 2);
       navigator.clipboard.writeText(jsonString).then(() => {
-        showStatus('Đã copy toàn bộ JSON!', 'green');
+        showStatus('Đã copy Trọn Bộ JSON (Phương Án B)!', 'green');
       }).catch(err => {
         console.error('Không thể sao chép toàn bộ JSON: ', err);
-        alert('Có lỗi xảy ra khi sao chép toàn bộ JSON.');
+        alert('Có lỗi xảy ra khi sao chép JSON.');
       });
     }
 
@@ -977,23 +2124,24 @@
     function copyHtmlToClipboard(e) {
       if (e) e.preventDefault();
       
-      // Validate word field is filled
-      if (!inputWord.value.trim()) {
-        showStatus('Lỗi: Hãy nhập Từ Vựng!', 'red');
-        inputWord.focus();
-        return;
+      let htmlString = '';
+      if (currentMode === 'banner') {
+        const bannerClone = document.getElementById('banner-content-wrapper').cloneNode(true);
+        bannerClone.classList.remove('hidden');
+        htmlString = bannerClone.outerHTML;
+      } else {
+        if (!inputWord.value.trim()) {
+          showStatus('Lỗi: Hãy nhập Từ Vựng!', 'red');
+          inputWord.focus();
+          return;
+        }
+        const cardClone = document.getElementById('flashcard-container').cloneNode(true);
+        cardClone.removeAttribute('style');
+        htmlString = cardClone.outerHTML;
       }
 
-      // Clone container to avoid mutating the active preview card
-      const cardClone = document.getElementById('flashcard-container').cloneNode(true);
-      
-      // Clean up inline styles like transform that were added during dynamic flipping
-      cardClone.removeAttribute('style');
-      
-      const htmlString = cardClone.outerHTML;
-
       navigator.clipboard.writeText(htmlString).then(() => {
-        showStatus('Đã sao chép HTML!', 'green');
+        showStatus(`Đã sao chép HTML ${currentMode === 'banner' ? 'Banner' : 'Thẻ'}!`, 'green');
       }).catch(err => {
         console.error('Không thể sao chép HTML vào clipboard: ', err);
         alert('Có lỗi xảy ra khi sao chép HTML.');
@@ -1012,33 +2160,31 @@
       }
 
       setTimeout(() => {
-        formStatus.textContent = 'Chế độ: Biên Tập Field';
-        formStatus.className = 'text-xs font-semibold px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20';
+        if (currentMode === 'banner') {
+          formStatus.textContent = 'Chế độ: Banner Bìa';
+          formStatus.className = 'text-xs font-semibold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20';
+        } else {
+          formStatus.textContent = 'Chế độ: Thẻ Từ Vựng';
+          formStatus.className = 'text-xs font-semibold px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20';
+        }
       }, 2500);
     }
 
     // --- Screenshot Logic ---
-    async function captureCurrentBackCard(word) {
-      // Randomize visual background for each capture
+    async function captureCurrentCard(label, isBanner = false) {
       setRandomBackground();
 
-      const cardElement = document.getElementById('flashcard-container');
-      if (!cardElement) throw new Error("Không tìm thấy thẻ.");
+      const cardFrame = document.getElementById('capture-frame');
+      if (!cardFrame) throw new Error("Không tìm thấy khung thẻ.");
 
-      // Find the back side
-      const backSide = document.getElementById('capture-frame');
-      if (!backSide) throw new Error("Không tìm thấy mặt sau của thẻ.");
-
-      // Wait a moment for background to switch and images to load
       await new Promise(r => setTimeout(r, 300));
       if (document.fonts) {
         await document.fonts.ready;
       }
 
-      // Fix CORS for images inside html-to-image by fetching them as blob manually? No, just use simple toCanvas
       try {
-        const canvasBack = await htmlToImage.toCanvas(backSide, {
-          pixelRatio: 2,
+        const canvasCard = await htmlToImage.toCanvas(cardFrame, {
+          pixelRatio: 2.7,
           style: {
             borderRadius: '0px',
             transform: 'none'
@@ -1046,7 +2192,7 @@
           useCORS: true
         });
         
-        addScreenshotToTable(word, 'Mặt Sau', canvasBack);
+        addScreenshotToTable(label, canvasCard, isBanner);
       } catch (err) {
         console.error("Lỗi khi render với html-to-image:", err);
         throw err;
@@ -1056,64 +2202,98 @@
     async function takeScreenshots(e) {
       if (e) e.preventDefault();
       
-      const word = inputWord.value.trim() || 'Thẻ Mới';
+      const isBanner = (currentMode === 'banner');
+      const label = isBanner
+        ? `Banner - ${BANNER_DATA.subject || 'Cover'}`
+        : (inputWord.value.trim() || 'Thẻ Mới');
+
       const btnScreenshot = document.getElementById('btn-screenshot');
       const originalBtnText = btnScreenshot.innerHTML;
       
       try {
         btnScreenshot.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Đang xử lý...`;
+        showPreviewLoading(true, `Đang chụp "${label}"...`);
         
-        await captureCurrentBackCard(word);
-        
-        showStatus('Đã chụp ảnh thẻ!', 'green');
+        await captureCurrentCard(label, isBanner);
+        showStatus(`Đã chụp ${isBanner ? 'Banner bìa' : 'ảnh thẻ'}!`, 'green');
 
       } catch (err) {
         console.error('Lỗi chụp ảnh:', err);
         alert('Có lỗi xảy ra khi chụp ảnh. Vui lòng thử lại.');
       } finally {
         btnScreenshot.innerHTML = originalBtnText;
+        showPreviewLoading(false);
       }
     }
 
+    // Chụp Toàn Bộ (Phương Án B: Tự động chụp Banner trước, sau đó chụp lần lượt các từ vựng)
     async function takeAllScreenshots(e) {
       if (e) e.preventDefault();
       
       const keys = Object.keys(PRESETS);
-      if(keys.length === 0) {
-        alert("Không có từ vựng nào trong danh sách!");
-        return;
-      }
-
       const btnAll = document.getElementById('btn-screenshot-all');
       const originalText = btnAll.innerHTML;
       
       try {
         btnAll.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Đang chụp...`;
         
+        const originalMode = currentMode;
         const originalPreset = currentPresetKey;
         
-        for(const key of keys) {
-            loadPreset(key);
-            // Đợi DOM cập nhật và ảnh (nếu có) load
-            await new Promise(r => setTimeout(r, 400)); 
-            
-            const word = PRESETS[key].word || key;
-            await captureCurrentBackCard(word);
+        const totalItems = 1 + keys.length;
+        let successCount = 0;
+        let failCount = 0;
+
+        // 1. Chụp Banner Bìa đầu tiên
+        showPreviewLoading(true, `Đang chụp Banner bìa (1/${totalItems})...`);
+        switchMode('banner', false);
+        await new Promise(r => setTimeout(r, 400));
+        try {
+          await captureCurrentCard(`Banner - ${BANNER_DATA.subject || 'Cover'}`, true);
+          successCount++;
+        } catch (err) {
+          console.error("Lỗi khi chụp Banner bìa:", err);
+          failCount++;
+        }
+
+        // 2. Chụp lần lượt tất cả các thẻ từ vựng
+        switchMode('flashcard', false);
+        for (let i = 0; i < keys.length; i++) {
+          const key = keys[i];
+          loadPreset(key);
+          showPreviewLoading(true, `Đang chụp thẻ "${PRESETS[key].word || key}" (${i + 2}/${totalItems})...`);
+          
+          await new Promise(r => setTimeout(r, 400));
+          const word = PRESETS[key].word || key;
+          try {
+            await captureCurrentCard(word, false);
+            successCount++;
+          } catch (err) {
+            console.error(`Lỗi khi chụp thẻ ${word}:`, err);
+            failCount++;
+          }
         }
         
-        // Trả lại preset ban đầu
-        if(originalPreset) loadPreset(originalPreset);
+        // Khôi phục trạng thái ban đầu
+        switchMode(originalMode, false);
+        if (originalPreset) loadPreset(originalPreset);
         
-        showStatus('Đã chụp toàn bộ!', 'green');
+        if (failCount > 0) {
+          alert(`Đã chụp ${successCount} ảnh (gồm Banner & ${successCount-1} từ vựng). Có ${failCount} thẻ bị lỗi.`);
+          showStatus(`Hoàn tất (${failCount} lỗi)`, 'red');
+        } else {
+          showStatus(`Đã chụp toàn bộ (${successCount} ảnh)!`, 'green');
+        }
       } catch(err) {
-         console.error('Lỗi chụp ảnh hàng loạt:', err);
-         alert('Có lỗi khi chụp ảnh hàng loạt.');
+        console.error('Lỗi quá trình chụp hàng loạt:', err);
+        alert('Có lỗi hệ thống khi chụp ảnh hàng loạt.');
       } finally {
-         btnAll.innerHTML = originalText;
+        btnAll.innerHTML = originalText;
+        showPreviewLoading(false);
       }
     }
 
-    function addScreenshotToTable(word, side, canvas) {
+    function addScreenshotToTable(word, canvas, isBanner = false) {
       const tbody = document.getElementById('screenshot-tbody');
       const emptyRow = document.getElementById('empty-screenshot-row');
       if (emptyRow) {
@@ -1125,17 +2305,22 @@
         
         const screenshotId = 'scr_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         const imgUrl = URL.createObjectURL(blob);
-        capturedScreenshots.push({ id: screenshotId, blob, word, side, imgUrl });
+        capturedScreenshots.push({ id: screenshotId, blob, word, imgUrl, isBanner });
         toggleDownloadAllButtonVisibility();
 
         const tr = document.createElement('tr');
         tr.className = 'bg-card border-b border-border hover:bg-secondary/20 transition-colors';
         
+        const badgeHtml = isBanner
+          ? `<span class="px-2 py-0.5 text-[10px] font-bold uppercase rounded-md bg-purple-500/20 text-purple-600 dark:text-purple-300 mr-2 border border-purple-500/30">Bìa</span>`
+          : `<span class="px-2 py-0.5 text-[10px] font-bold uppercase rounded-md bg-primary/20 text-primary mr-2 border border-primary/30">Thẻ</span>`;
+
         tr.innerHTML = `
-          <td class="px-6 py-4 font-semibold text-primary font-heading">${word}</td>
-          <td class="px-6 py-4">${side}</td>
+          <td class="px-6 py-4 font-semibold text-foreground font-heading flex items-center">
+            ${badgeHtml} <span class="${isBanner ? 'text-purple-600 dark:text-purple-300 font-bold' : 'text-primary'}">${word}</span>
+          </td>
           <td class="px-6 py-4">
-            <img src="${imgUrl}" alt="${word} ${side}" class="h-24 w-auto rounded-lg border border-border shadow-md object-contain bg-background" />
+            <img src="${imgUrl}" alt="${word}" class="h-24 w-auto rounded-lg border border-border shadow-md object-contain bg-background" />
           </td>
           <td class="px-6 py-4 text-center flex flex-col gap-2 items-center justify-center">
             <button class="btn-copy-img px-4 py-2 w-28 text-[11px] uppercase tracking-wider font-bold bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border border-primary/20 rounded-lg transition-all shadow-sm">
@@ -1154,7 +2339,8 @@
         btnDownload.addEventListener('click', () => {
           const a = document.createElement('a');
           a.href = imgUrl;
-          a.download = `flashcard_${word}_${Date.now()}.png`;
+          const rowIndex = Array.from(tbody.children).indexOf(tr) + 1;
+          a.download = `${rowIndex} - ${word}.png`;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
@@ -1188,7 +2374,7 @@
           tr.remove();
           toggleDownloadAllButtonVisibility();
           if (tbody.children.length === 0) {
-            tbody.innerHTML = `<tr id="empty-screenshot-row" class="bg-card"><td colspan="4" class="px-6 py-8 text-center text-muted-foreground italic">Chưa có ảnh nào được chụp. Nhấn "Chụp ảnh thẻ" để bắt đầu.</td></tr>`;
+            tbody.innerHTML = `<tr id="empty-screenshot-row" class="bg-card"><td colspan="3" class="px-6 py-8 text-center text-muted-foreground italic">Chưa có ảnh nào được chụp. Nhấn "Chụp ảnh thẻ" hoặc "Chụp tất cả" để bắt đầu.</td></tr>`;
           }
         });
 
@@ -1214,6 +2400,11 @@
         return;
       }
 
+      if (typeof JSZip === 'undefined') {
+        alert("Thư viện nén file (JSZip) chưa được tải hoặc bị chặn bởi trình duyệt. Hãy kiểm tra kết nối mạng hoặc tải lại trang.");
+        return;
+      }
+
       const btnDownloadAll = document.getElementById('btn-download-all');
       const originalText = btnDownloadAll.innerHTML;
       
@@ -1223,33 +2414,42 @@
         const zip = new JSZip();
         const nameCount = {};
         
-        capturedScreenshots.forEach((item) => {
-          let baseName = `flashcard_${item.word}_${item.side.replace(/\s+/g, '_')}`;
+        let fileIndex = 1;
+        for (const item of capturedScreenshots) {
+          let safeWord = (item.word || 'word').replace(/[^a-zA-Z0-9_-]/g, '_');
+          let baseName = `${fileIndex} - ${safeWord}`;
+          
           if (nameCount[baseName] === undefined) {
             nameCount[baseName] = 1;
           } else {
             nameCount[baseName]++;
             baseName = `${baseName}_${nameCount[baseName]}`;
           }
-          zip.file(`${baseName}.png`, item.blob);
-        });
+          
+          const arrayBuffer = await item.blob.arrayBuffer();
+          zip.file(`${baseName}.png`, arrayBuffer);
+          fileIndex++;
+        }
         
         const content = await zip.generateAsync({ type: "blob" });
         const zipUrl = URL.createObjectURL(content);
         
         const a = document.createElement('a');
         a.href = zipUrl;
-        a.download = `flashcards_${Date.now()}.zip`;
+        a.download = `wordfight_${(BANNER_DATA.subject || 'vocab').replace(/\s+/g, '_')}_${Date.now()}.zip`;
+        a.style.display = 'none';
         document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
         
-        setTimeout(() => URL.revokeObjectURL(zipUrl), 10000);
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(zipUrl);
+        }, 1000);
         
         showStatus('Đã tải bộ ảnh (.zip)!', 'green');
       } catch (err) {
         console.error('Lỗi khi nén zip ảnh:', err);
-        alert('Có lỗi xảy ra khi nén và tải ảnh. Vui lòng thử lại.');
+        alert('Có lỗi xảy ra khi nén file zip: ' + err.message);
       } finally {
         btnDownloadAll.innerHTML = originalText;
       }
