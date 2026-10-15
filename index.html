@@ -163,12 +163,27 @@
       height: 400px;
       background: radial-gradient(circle, hsl(var(--primary) / 0.2) 0%, transparent 70%);
     }
-    .aurora-bg::after {
+    .aurora-bg::after, .aurora-bg::before {
       right: 10%;
       bottom: 10%;
       width: 450px;
       height: 450px;
       background: radial-gradient(circle, hsl(var(--accent) / 0.15) 0%, transparent 70%);
+      pointer-events: none !important;
+    }
+
+    /* Đảm bảo toàn bộ các ô input, textarea, select luôn có thể click và nhận con trỏ nhập liệu trong Electron */
+    input, textarea, select {
+      -webkit-app-region: no-drag !important;
+      user-select: text !important;
+      -webkit-user-select: text !important;
+      pointer-events: auto !important;
+      cursor: text !important;
+    }
+
+    button {
+      -webkit-app-region: no-drag !important;
+      pointer-events: auto !important;
     }
   </style>
 </head>
@@ -630,10 +645,16 @@
     <div class="bg-card/50 backdrop-blur-md border border-border p-5 rounded-2xl shadow-sm flex flex-col gap-4">
       <div class="flex items-center justify-between flex-wrap gap-4">
         <h2 class="text-sm font-bold tracking-wide uppercase text-muted-foreground font-heading">Ảnh đã chụp (Screenshots)</h2>
-        <button id="btn-download-all" class="hidden px-4 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md cursor-pointer flex items-center gap-1.5 transition-all select-none hover:scale-105 active:scale-[0.98]">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Tải toàn bộ (.zip)
-        </button>
+        <div class="flex items-center gap-2">
+          <button id="btn-download-all" class="hidden px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-md cursor-pointer flex items-center gap-1.5 transition-all select-none hover:scale-105 active:scale-[0.98]">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+            Lưu vào thư mục (Folder)
+          </button>
+          <button id="btn-download-zip" title="Tải dạng file nén .zip nếu cần gửi qua mạng" class="hidden px-3 py-2 text-xs font-semibold bg-secondary hover:bg-secondary/80 text-muted-foreground hover:text-foreground border border-border rounded-xl shadow-sm cursor-pointer flex items-center gap-1.5 transition-all select-none">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Tải .zip
+          </button>
+        </div>
       </div>
       <div class="overflow-x-auto wordfight-scrollbar rounded-xl border border-border">
         <table class="w-full text-sm text-left text-foreground">
@@ -794,10 +815,85 @@
     </div>
   </dialog>
 
+  <!-- In-app Toast Notification Container (Không làm mất focus ô input) -->
+  <div id="app-toast-container" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none transition-all"></div>
+
+  <!-- In-app Confirm Modal (Tránh lỗi Chromium Windows làm mất focus input vĩnh viễn do native confirm) -->
+  <dialog id="app-confirm-modal" class="bg-card/95 border border-border rounded-2xl p-6 backdrop-blur-md shadow-2xl backdrop:bg-black/50 w-full max-w-sm m-auto text-foreground z-50">
+    <h3 class="text-base font-bold mb-2 font-heading" id="app-confirm-title">Xác nhận</h3>
+    <p class="text-sm text-muted-foreground mb-6" id="app-confirm-message"></p>
+    <div class="flex justify-end gap-3">
+      <button id="app-confirm-cancel" class="px-4 py-2 rounded-xl text-sm font-semibold bg-secondary hover:bg-secondary/80 transition-colors cursor-pointer">Hủy</button>
+      <button id="app-confirm-ok" class="px-4 py-2 rounded-xl text-sm font-bold bg-red-600 text-white hover:bg-red-700 transition-colors shadow-md cursor-pointer">Đồng ý</button>
+    </div>
+  </dialog>
+
   <!-- Include Flashcard Script -->
   <script src="./flashcard-maker.js"></script>
   
   <script>
+    // Custom In-App Notification & Confirmation (Loại bỏ triệt để window.alert & window.confirm gây lỗi đơ bàn phím trong Electron)
+    function showToast(message, type = 'red') {
+      const container = document.getElementById('app-toast-container');
+      if (!container) return;
+      const toast = document.createElement('div');
+      let bgBorder = 'bg-secondary text-foreground border-border';
+      if (type === 'green' || type === 'success') {
+        bgBorder = 'bg-emerald-500/90 text-white border-emerald-400';
+      } else if (type === 'red' || type === 'error') {
+        bgBorder = 'bg-rose-600/90 text-white border-rose-500';
+      } else if (type === 'yellow' || type === 'warning') {
+        bgBorder = 'bg-amber-500/90 text-white border-amber-400';
+      }
+      toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border shadow-xl text-xs font-semibold backdrop-blur-md transition-all duration-300 transform -translate-y-2 opacity-0 flex items-center gap-2 ${bgBorder}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.remove('-translate-y-2', 'opacity-0');
+      });
+      setTimeout(() => {
+        toast.classList.add('opacity-0', '-translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    function showNotification(message, type = 'red') {
+      if (typeof showStatus === 'function') {
+        showStatus(message, type);
+      }
+      showToast(message, type);
+    }
+
+    function showConfirmDialog(message, title = "Xác nhận") {
+      return new Promise((resolve) => {
+        const modal = document.getElementById('app-confirm-modal');
+        const msgEl = document.getElementById('app-confirm-message');
+        const titleEl = document.getElementById('app-confirm-title');
+        const btnCancel = document.getElementById('app-confirm-cancel');
+        const btnOk = document.getElementById('app-confirm-ok');
+
+        msgEl.textContent = message;
+        titleEl.textContent = title;
+        modal.showModal();
+
+        const cleanup = (result) => {
+          modal.close();
+          btnCancel.removeEventListener('click', onCancel);
+          btnOk.removeEventListener('click', onOk);
+          setTimeout(() => {
+            if (inputWord) inputWord.focus();
+          }, 50);
+          resolve(result);
+        };
+
+        const onCancel = () => cleanup(false);
+        const onOk = () => cleanup(true);
+
+        btnCancel.addEventListener('click', onCancel);
+        btnOk.addEventListener('click', onOk);
+      });
+    }
+
     // Presets Vocabulary Data List
     let PRESETS = {};
 
@@ -950,6 +1046,20 @@
         clearForm();
       }
 
+      // Tự động focus ô nhập từ vựng ngay khi ứng dụng mở để sẵn sàng gõ phím
+      setTimeout(() => {
+        if (inputWord) {
+          inputWord.focus();
+        }
+      }, 200);
+
+      // Đảm bảo click vào bất kỳ ô input/textarea nào cũng được focus tức thì
+      document.querySelectorAll('input, textarea').forEach(el => {
+        el.addEventListener('mousedown', () => {
+          setTimeout(() => el.focus(), 10);
+        });
+      });
+
       // Mode switching events
       tabModeBanner.addEventListener('click', () => switchMode('banner'));
       tabModeFlashcard.addEventListener('click', () => switchMode('flashcard'));
@@ -1055,6 +1165,7 @@
 
       form.querySelectorAll('input').forEach(inp => {
         inp.addEventListener('keydown', (e) => {
+          if (e.isComposing || e.keyCode === 229) return;
           if (e.key === 'Enter') {
             e.preventDefault();
             updateCurrentPreset();
@@ -1063,6 +1174,7 @@
       });
       bannerForm.querySelectorAll('input').forEach(inp => {
         inp.addEventListener('keydown', (e) => {
+          if (e.isComposing || e.keyCode === 229) return;
           if (e.key === 'Enter') {
             e.preventDefault();
             updateBannerDataFromForm();
@@ -1239,7 +1351,12 @@
 
       const btnDownloadAll = document.getElementById('btn-download-all');
       if (btnDownloadAll) {
-        btnDownloadAll.addEventListener('click', downloadAllScreenshots);
+        btnDownloadAll.addEventListener('click', saveAllScreenshotsToFolder);
+      }
+
+      const btnDownloadZip = document.getElementById('btn-download-zip');
+      if (btnDownloadZip) {
+        btnDownloadZip.addEventListener('click', downloadAllScreenshotsAsZip);
       }
 
       // Clear Form button click
@@ -1264,14 +1381,14 @@
       btnImportConfirm.addEventListener('click', () => {
         const val = importTextarea.value.trim();
         if (!val) {
-          alert("Vui lòng nhập dữ liệu JSON.");
+          showNotification("Vui lòng nhập dữ liệu JSON.", "yellow");
           return;
         }
         let parsed;
         try {
           parsed = JSON.parse(val);
         } catch(e) {
-          alert("Lỗi phân tích JSON. Vui lòng kiểm tra lại định dạng.");
+          showNotification("Lỗi phân tích JSON. Vui lòng kiểm tra lại định dạng.", "red");
           console.error(e);
           return;
         }
@@ -1364,13 +1481,16 @@
             } else {
               msg = `Đã nhập thành công ${vocabCount} từ vựng!`;
             }
-            alert(msg);
+            showNotification(msg, "green");
             importModal.close();
+            setTimeout(() => {
+              if (inputWord) inputWord.focus();
+            }, 100);
           } else {
-            alert("Không tìm thấy dữ liệu hợp lệ trong JSON. Hãy đảm bảo có trường 'word' hoặc đối tượng 'banner'.");
+            showNotification("Không tìm thấy dữ liệu hợp lệ trong JSON. Hãy đảm bảo có trường 'word' hoặc đối tượng 'banner'.", "yellow");
           }
         } catch (e) {
-          alert("Đã xảy ra lỗi trong quá trình nhập dữ liệu.");
+          showNotification("Đã xảy ra lỗi trong quá trình nhập dữ liệu.", "red");
           console.error(e);
         }
       });
@@ -1856,7 +1976,7 @@
 
       const data = getFormData();
       if (!data.word) {
-        alert("Vui lòng nhập Từ vựng (Word) trước khi lưu.");
+        showNotification("Vui lòng nhập Từ vựng (Word) trước khi lưu.", "yellow");
         inputWord.focus();
         return;
       }
@@ -1877,7 +1997,7 @@
 
       const data = getFormData();
       if (!data.word) {
-        alert("Vui lòng nhập Từ vựng (Word).");
+        showNotification("Vui lòng nhập Từ vựng (Word).", "yellow");
         inputWord.focus();
         return;
       }
@@ -1905,9 +2025,10 @@
       showStatus(`Đã cập nhật từ '${data.word}'!`, 'green');
     }
 
-    function deleteCurrentPreset() {
+    async function deleteCurrentPreset() {
       if (currentMode === 'banner') {
-        if (confirm("Bạn có muốn đặt lại Banner bìa về mặc định không?")) {
+        const confirmed = await showConfirmDialog("Bạn có muốn đặt lại Banner bìa về mặc định không?", "Đặt lại Banner");
+        if (confirmed) {
           BANNER_DATA = { ...DEFAULT_BANNER };
           saveBannerToStorage();
           updateBannerFormFromData();
@@ -1919,10 +2040,12 @@
       }
 
       if (!currentPresetKey) {
-        alert("Bạn chưa chọn từ vựng nào để xóa.");
+        showNotification("Bạn chưa chọn từ vựng nào để xóa.", "yellow");
         return;
       }
-      if (confirm(`Bạn có chắc muốn xóa từ '${PRESETS[currentPresetKey].word || currentPresetKey}'?`)) {
+      const wordName = PRESETS[currentPresetKey] ? (PRESETS[currentPresetKey].word || currentPresetKey) : currentPresetKey;
+      const confirmed = await showConfirmDialog(`Bạn có chắc muốn xóa từ '${wordName}'?`, "Xóa từ vựng");
+      if (confirmed) {
         delete PRESETS[currentPresetKey];
         savePresetsToStorage();
         const remainingKeys = Object.keys(PRESETS);
@@ -1933,16 +2056,18 @@
           clearForm();
         }
         renderPresetButtons();
+        showStatus(`Đã xóa từ '${wordName}'!`, 'green');
       }
     }
 
-    function deleteAllPresets() {
+    async function deleteAllPresets() {
       const keys = Object.keys(PRESETS);
       if (keys.length === 0) {
-        alert("Danh sách từ vựng hiện đã trống.");
+        showNotification("Danh sách từ vựng hiện đã trống.", "yellow");
         return;
       }
-      if (confirm("Bạn có chắc chắn muốn XÓA TOÀN BỘ danh sách từ vựng không? Hành động này không thể hoàn tác.")) {
+      const confirmed = await showConfirmDialog("Bạn có chắc chắn muốn XÓA TOÀN BỘ danh sách từ vựng không? Hành động này không thể hoàn tác.", "Xóa tất cả");
+      if (confirmed) {
         PRESETS = {};
         savePresetsToStorage();
         currentPresetKey = null;
@@ -2081,7 +2206,7 @@
           showStatus('Đã sao chép JSON Banner!', 'green');
         }).catch(err => {
           console.error(err);
-          alert('Có lỗi xảy ra khi sao chép JSON.');
+          showNotification('Có lỗi xảy ra khi sao chép JSON.', 'red');
         });
         return;
       }
@@ -2098,7 +2223,7 @@
         showStatus('Đã sao chép JSON Từ!', 'green');
       }).catch(err => {
         console.error(err);
-        alert('Có lỗi xảy ra khi sao chép JSON.');
+        showNotification('Có lỗi xảy ra khi sao chép JSON.', 'red');
       });
     }
 
@@ -2116,7 +2241,7 @@
         showStatus('Đã copy Trọn Bộ JSON (Phương Án B)!', 'green');
       }).catch(err => {
         console.error('Không thể sao chép toàn bộ JSON: ', err);
-        alert('Có lỗi xảy ra khi sao chép JSON.');
+        showNotification('Có lỗi xảy ra khi sao chép JSON.', 'red');
       });
     }
 
@@ -2144,7 +2269,7 @@
         showStatus(`Đã sao chép HTML ${currentMode === 'banner' ? 'Banner' : 'Thẻ'}!`, 'green');
       }).catch(err => {
         console.error('Không thể sao chép HTML vào clipboard: ', err);
-        alert('Có lỗi xảy ra khi sao chép HTML.');
+        showNotification('Có lỗi xảy ra khi sao chép HTML.', 'red');
       });
     }
 
@@ -2219,7 +2344,7 @@
 
       } catch (err) {
         console.error('Lỗi chụp ảnh:', err);
-        alert('Có lỗi xảy ra khi chụp ảnh. Vui lòng thử lại.');
+        showNotification('Có lỗi xảy ra khi chụp ảnh. Vui lòng thử lại.', 'red');
       } finally {
         btnScreenshot.innerHTML = originalBtnText;
         showPreviewLoading(false);
@@ -2279,14 +2404,15 @@
         if (originalPreset) loadPreset(originalPreset);
         
         if (failCount > 0) {
-          alert(`Đã chụp ${successCount} ảnh (gồm Banner & ${successCount-1} từ vựng). Có ${failCount} thẻ bị lỗi.`);
+          showNotification(`Đã chụp ${successCount} ảnh (gồm Banner & ${successCount-1} từ vựng). Có ${failCount} thẻ bị lỗi.`, 'yellow');
           showStatus(`Hoàn tất (${failCount} lỗi)`, 'red');
         } else {
+          showNotification(`Đã chụp thành công toàn bộ (${successCount} ảnh)!`, 'green');
           showStatus(`Đã chụp toàn bộ (${successCount} ảnh)!`, 'green');
         }
       } catch(err) {
         console.error('Lỗi quá trình chụp hàng loạt:', err);
-        alert('Có lỗi hệ thống khi chụp ảnh hàng loạt.');
+        showNotification('Có lỗi hệ thống khi chụp ảnh hàng loạt.', 'red');
       } finally {
         btnAll.innerHTML = originalText;
         showPreviewLoading(false);
@@ -2363,7 +2489,7 @@
             }, 2000);
           } catch (err) {
             console.error('Không thể copy ảnh:', err);
-            alert('Trình duyệt của bạn có thể không hỗ trợ copy ảnh trực tiếp qua Clipboard API.');
+            showNotification('Trình duyệt có thể không hỗ trợ copy ảnh trực tiếp qua Clipboard API.', 'yellow');
           }
         });
 
@@ -2384,76 +2510,176 @@
 
     function toggleDownloadAllButtonVisibility() {
       const btnDownloadAll = document.getElementById('btn-download-all');
+      const btnDownloadZip = document.getElementById('btn-download-zip');
+      const hasScreenshots = capturedScreenshots.length > 0;
       if (btnDownloadAll) {
-        if (capturedScreenshots.length > 0) {
-          btnDownloadAll.classList.remove('hidden');
-        } else {
-          btnDownloadAll.classList.add('hidden');
-        }
+        if (hasScreenshots) btnDownloadAll.classList.remove('hidden');
+        else btnDownloadAll.classList.add('hidden');
+      }
+      if (btnDownloadZip) {
+        if (hasScreenshots) btnDownloadZip.classList.remove('hidden');
+        else btnDownloadZip.classList.add('hidden');
       }
     }
 
-    async function downloadAllScreenshots(e) {
+    async function prepareExportFiles() {
+      const nameCount = {};
+      const files = [];
+      let fileIndex = 1;
+      for (const item of capturedScreenshots) {
+        let safeWord = (item.word || 'word').replace(/[^a-zA-Z0-9_\u00C0-\u024F\u1EA0-\u1EF9 -]/g, '_');
+        let baseName = `${fileIndex} - ${safeWord}`;
+        if (nameCount[baseName] === undefined) {
+          nameCount[baseName] = 1;
+        } else {
+          nameCount[baseName]++;
+          baseName = `${baseName}_${nameCount[baseName]}`;
+        }
+        const arrayBuffer = await item.blob.arrayBuffer();
+        files.push({
+          name: `${baseName}.png`,
+          buffer: arrayBuffer,
+          blob: item.blob
+        });
+        fileIndex++;
+      }
+      return files;
+    }
+
+    // Lưu toàn bộ ảnh trực tiếp vào Thư mục (Folder) - Không cần giải nén rar/zip
+    async function saveAllScreenshotsToFolder(e) {
       if (e) e.preventDefault();
       if (capturedScreenshots.length === 0) {
-        alert("Chưa có ảnh nào được chụp để tải!");
-        return;
-      }
-
-      if (typeof JSZip === 'undefined') {
-        alert("Thư viện nén file (JSZip) chưa được tải hoặc bị chặn bởi trình duyệt. Hãy kiểm tra kết nối mạng hoặc tải lại trang.");
+        showNotification("Chưa có ảnh nào được chụp để lưu!", "yellow");
         return;
       }
 
       const btnDownloadAll = document.getElementById('btn-download-all');
       const originalText = btnDownloadAll.innerHTML;
-      
+
       try {
-        btnDownloadAll.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Đang nén...`;
-        
-        const zip = new JSZip();
-        const nameCount = {};
-        
-        let fileIndex = 1;
-        for (const item of capturedScreenshots) {
-          let safeWord = (item.word || 'word').replace(/[^a-zA-Z0-9_-]/g, '_');
-          let baseName = `${fileIndex} - ${safeWord}`;
-          
-          if (nameCount[baseName] === undefined) {
-            nameCount[baseName] = 1;
-          } else {
-            nameCount[baseName]++;
-            baseName = `${baseName}_${nameCount[baseName]}`;
+        btnDownloadAll.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Đang lưu thư mục...`;
+
+        const subjectClean = (BANNER_DATA.subject || 'Vocab').trim().replace(/[^a-zA-Z0-9_\u00C0-\u024F\u1EA0-\u1EF9 -]/g, '_');
+        const folderName = `WordFight - ${subjectClean}`;
+        const files = await prepareExportFiles();
+
+        // 1. Khi chạy trong Desktop App (Electron)
+        if (window.electronAPI && typeof window.electronAPI.saveImagesToFolder === 'function') {
+          const result = await window.electronAPI.saveImagesToFolder({
+            folderName: folderName,
+            files: files.map(f => ({ name: f.name, buffer: f.buffer }))
+          });
+
+          if (result.canceled) {
+            showStatus('Đã hủy chọn thư mục.', 'yellow');
+            return;
           }
-          
-          const arrayBuffer = await item.blob.arrayBuffer();
-          zip.file(`${baseName}.png`, arrayBuffer);
-          fileIndex++;
+
+          if (result.success) {
+            showNotification(`Đã lưu ${result.fileCount} ảnh vào thư mục "${folderName}"!`, 'green');
+            showStatus(`Đã lưu thành công vào folder: ${result.folderPath}`, 'green');
+          } else {
+            throw new Error(result.error || 'Lỗi khi lưu thư mục trong Electron');
+          }
+          return;
         }
-        
-        const content = await zip.generateAsync({ type: "blob" });
-        const zipUrl = URL.createObjectURL(content);
-        
-        const a = document.createElement('a');
-        a.href = zipUrl;
-        a.download = `wordfight_${(BANNER_DATA.subject || 'vocab').replace(/\s+/g, '_')}_${Date.now()}.zip`;
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-        
-        setTimeout(() => {
-          document.body.removeChild(a);
-          URL.revokeObjectURL(zipUrl);
-        }, 1000);
-        
-        showStatus('Đã tải bộ ảnh (.zip)!', 'green');
+
+        // 2. Khi chạy trong Trình duyệt hỗ trợ File System Access API (Chrome, Edge...)
+        if (window.showDirectoryPicker) {
+          try {
+            const rootDirHandle = await window.showDirectoryPicker({
+              mode: 'readwrite',
+              startIn: 'downloads'
+            });
+
+            const subDirHandle = await rootDirHandle.getDirectoryHandle(folderName, { create: true });
+
+            for (const file of files) {
+              const fileHandle = await subDirHandle.getFileHandle(file.name, { create: true });
+              const writable = await fileHandle.createWritable();
+              await writable.write(file.blob);
+              await writable.close();
+            }
+
+            showNotification(`Đã lưu ${files.length} ảnh trực tiếp vào thư mục "${folderName}"!`, 'green');
+            showStatus(`Đã lưu thành công vào thư mục "${folderName}"!`, 'green');
+            return;
+          } catch (pickerErr) {
+            if (pickerErr.name === 'AbortError') {
+              showStatus('Đã hủy chọn thư mục.', 'yellow');
+              return;
+            }
+            console.warn('Lỗi File System Access API, chuyển sang nén zip:', pickerErr);
+          }
+        }
+
+        // 3. Fallback tải file zip nếu trình duyệt không hỗ trợ lưu folder
+        await downloadAllScreenshotsAsZip(null, files, folderName);
+
       } catch (err) {
-        console.error('Lỗi khi nén zip ảnh:', err);
-        alert('Có lỗi xảy ra khi nén file zip: ' + err.message);
+        console.error('Lỗi khi lưu ảnh vào thư mục:', err);
+        showNotification('Có lỗi khi lưu thư mục: ' + err.message, 'red');
       } finally {
         btnDownloadAll.innerHTML = originalText;
       }
     }
+
+    // Tải bộ ảnh dạng file .zip (khi cần lưu trữ hoặc gửi qua mạng)
+    async function downloadAllScreenshotsAsZip(e, preloadedFiles = null, customFolderName = null) {
+      if (e) e.preventDefault();
+      if (capturedScreenshots.length === 0) {
+        showNotification("Chưa có ảnh nào được chụp để tải!", "yellow");
+        return;
+      }
+
+      if (typeof JSZip === 'undefined') {
+        showNotification("Thư viện nén file (JSZip) chưa được tải hoặc bị chặn. Hãy kiểm tra kết nối mạng.", "red");
+        return;
+      }
+
+      const btnZip = document.getElementById('btn-download-zip') || document.getElementById('btn-download-all');
+      const originalText = btnZip ? btnZip.innerHTML : '';
+
+      try {
+        if (btnZip) {
+          btnZip.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Đang nén .zip...`;
+        }
+
+        const zip = new JSZip();
+        const files = preloadedFiles || await prepareExportFiles();
+
+        for (const file of files) {
+          zip.file(file.name, file.buffer);
+        }
+
+        const content = await zip.generateAsync({ type: "blob" });
+        const zipUrl = URL.createObjectURL(content);
+
+        const a = document.createElement('a');
+        a.href = zipUrl;
+        const subjectClean = (BANNER_DATA.subject || 'vocab').replace(/\s+/g, '_');
+        a.download = customFolderName ? `${customFolderName}.zip` : `wordfight_${subjectClean}_${Date.now()}.zip`;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(zipUrl);
+        }, 1000);
+
+        showStatus('Đã tải bộ ảnh (.zip)!', 'green');
+      } catch (err) {
+        console.error('Lỗi khi nén zip ảnh:', err);
+        showNotification('Có lỗi xảy ra khi nén file zip: ' + err.message, 'red');
+      } finally {
+        if (btnZip) btnZip.innerHTML = originalText;
+      }
+    }
+
+    // Tương thích ngược
+    const downloadAllScreenshots = saveAllScreenshotsToFolder;
   </script>
 </body>
 </html>
